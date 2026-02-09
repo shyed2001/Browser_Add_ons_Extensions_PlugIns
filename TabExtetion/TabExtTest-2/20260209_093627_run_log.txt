@@ -1,0 +1,98 @@
+RUN LOG
+started_utc: 2026-02-09T09:36:27.451178+00:00
+ended_utc:   2026-02-09T09:36:27.568317+00:00
+output_dir:  F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest-2
+merged_file: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest-2\merged_output.txt
+per_file_dir: (not created)
+llm_export_enabled: False
+total_selected_files:  13
+total_processed_files: 11
+total_skipped_files:   2
+
+=== SKIPPED FILES ===
+path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest1\README.md
+reason: no text extracted or unsupported type
+
+path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest-2\New Text Document.txt
+reason: no text extracted or unsupported type
+
+=== JSON INDEX ===
+[
+  {
+    "path": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabExtetion\\TabExtTest1\\manifest.json",
+    "ext": ".json",
+    "size_bytes": 481,
+    "modified_utc": "2026-01-21T10:37:04.937841+00:00",
+    "text_file": ""
+  },
+  {
+    "path": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabExtetion\\TabExtTest1\\popup.html",
+    "ext": ".html",
+    "size_bytes": 780,
+    "modified_utc": "2026-01-21T10:37:04.937841+00:00",
+    "text_file": ""
+  },
+  {
+    "path": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabExtetion\\TabExtTest1\\popup.js",
+    "ext": ".js",
+    "size_bytes": 1450,
+    "modified_utc": "2026-01-21T10:37:04.937841+00:00",
+    "text_file": ""
+  },
+  {
+    "path": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabExtetion\\TabExtTest-2\\dashboard.html",
+    "ext": ".html",
+    "size_bytes": 2938,
+    "modified_utc": "2026-02-09T04:42:28.010642+00:00",
+    "text_file": ""
+  },
+  {
+    "path": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabExtetion\\TabExtTest-2\\dashboard.js",
+    "ext": ".js",
+    "size_bytes": 5315,
+    "modified_utc": "2026-02-09T04:43:16.182875+00:00",
+    "text_file": ""
+  },
+  {
+    "path": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabExtetion\\TabExtTest-2\\InteractiveProjectHub.html",
+    "ext": ".html",
+    "size_bytes": 25256,
+    "modified_utc": "2026-02-09T05:02:33.781067+00:00",
+    "text_file": ""
+  },
+  {
+    "path": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabExtetion\\TabExtTest-2\\manifest.json",
+    "ext": ".json",
+    "size_bytes": 614,
+    "modified_utc": "2026-02-09T05:35:34.281148+00:00",
+    "text_file": ""
+  },
+  {
+    "path": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabExtetion\\TabExtTest-2\\popup.html",
+    "ext": ".html",
+    "size_bytes": 1528,
+    "modified_utc": "2026-02-09T04:40:22.582730+00:00",
+    "text_file": ""
+  },
+  {
+    "path": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabExtetion\\TabExtTest-2\\popup.js",
+    "ext": ".js",
+    "size_bytes": 1932,
+    "modified_utc": "2026-02-09T04:41:13.440369+00:00",
+    "text_file": ""
+  },
+  {
+    "path": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabExtetion\\TabExtTest-2\\Project_Documentation.txt",
+    "ext": ".txt",
+    "size_bytes": 1998,
+    "modified_utc": "2026-02-09T05:00:04.927965+00:00",
+    "text_file": ""
+  },
+  {
+    "path": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabExtetion\\TabExtTest-2\\README.md",
+    "ext": ".md",
+    "size_bytes": 2538,
+    "modified_utc": "2026-02-09T05:07:08.972794+00:00",
+    "text_file": ""
+  }
+]

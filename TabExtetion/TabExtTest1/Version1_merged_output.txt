@@ -1,0 +1,113 @@
+
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest1\manifest.json
+File extension: .json
+size_bytes: 481
+File modified_utc: 2026-01-21T10:37:04.937841+00:00
+=================
+
+================================================================================
+
+{
+  "manifest_version": 3,
+  "name": "My Tab Lister",
+  "version": "1.0",
+  "description": "Lists all open tabs and their URLs.",
+  "permissions": [
+    "tabs"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon16.png", 
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  }
+}
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest1\popup.html
+File extension: .html
+size_bytes: 780
+File modified_utc: 2026-01-21T10:37:04.937841+00:00
+=================
+
+================================================================================
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Tabs</title>
+  <style>
+    body { font-family: Arial, sans-serif; width: 400px; max-height: 500px; overflow-y: auto; }
+    ul { list-style-type: none; padding: 0; }
+    li { padding: 5px; border-bottom: 1px solid #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+    li a { text-decoration: none; color: #333; }
+    li a:hover { color: #007bff; }
+    textarea { width: 98%; margin-top:10px; height: 100px; }
+    button { margin-top: 5px; padding: 8px; }
+  </style>
+</head>
+<body>
+  <h3>Currently Open Tabs:</h3>
+  <ul id="tabList">
+    </ul>
+  <textarea id="tabListText" readonly></textarea>
+  <button id="copyButton">Copy to Clipboard</button>
+  <script src="popup.js"></script>
+</body>
+</html>
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest1\popup.js
+File extension: .js
+size_bytes: 1450
+File modified_utc: 2026-01-21T10:37:04.937841+00:00
+=================
+
+================================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  const tabListElement = document.getElementById('tabList');
+  const tabListTextElement = document.getElementById('tabListText');
+  const copyButton = document.getElementById('copyButton');
+  let fullTextToCopy = '';
+
+  // Query for all tabs in the current window
+  chrome.tabs.query({currentWindow: true}, function(tabs) {
+    tabs.forEach(function(tab) {
+      const listItem = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = tab.url;
+      link.textContent = tab.title || tab.url; // Display title, or URL if title is empty
+      link.target = "_blank"; // Open link in new tab if clicked
+
+      listItem.appendChild(link);
+      tabListElement.appendChild(listItem);
+
+      // Prepare text for the textarea and copying
+      fullTextToCopy += `${tab.title || 'No Title'}\n${tab.url}\n\n`;
+    });
+    tabListTextElement.value = fullTextToCopy.trim();
+  });
+
+  copyButton.addEventListener('click', function() {
+    tabListTextElement.select();
+    try {
+      document.execCommand('copy');
+      copyButton.textContent = 'Copied!';
+      setTimeout(() => { copyButton.textContent = 'Copy to Clipboard'; }, 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      copyButton.textContent = 'Error Copying';
+    }
+    window.getSelection().removeAllRanges(); // Deselect
+  });
+});

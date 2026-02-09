@@ -1,0 +1,117 @@
+
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\SRS_TabListExtension.txt
+File extension: .txt
+size_bytes: 4257
+File modified_utc: 2026-02-09T05:08:13.361224+00:00
+=================
+
+================================================================================
+
+<markdown:Project SRS:SRS_Document.md>
+
+📑 Software Requirements Specification (SRS)
+Project Title: OpenTabListInfoRestoreExtension (v2.0 Roadmap) Status: Consolidated Requirements (Academic/Professional Grade)
+
+1. Introduction
+1.1 Purpose
+This document defines the complete functional and non-functional requirements for the OpenTabList extension, aggregating all features from basic tab saving to advanced AI-driven research assistance.
+
+1.2 Scope
+The system acts as a hybrid between a Bookmark Manager, Research Database, and Session Restore tool. It caters to users in Engineering, Science, Business, and Finance by providing deep logging and metadata for web-based activities.
+
+2. Functional Requirements
+2.1 Core Tab Management
+FR-1: Session Capture: Must capture Tab Name, URL, and metadata for all active tabs in a window.
+
+FR-2: Duplicate Prevention: Use URL as a primary key. No duplicate entries; instead, increment a repeatCount.
+
+FR-3: RGYB Visual Logic: Implement a Red-Yellow-Green-Blue (RGYB) tick/star system to indicate link frequency.
+
+FR-4: Temporal Logging: Append timestamps to a list for every repeat save action rather than overwriting.
+
+2.2 Data Management (DBMS)
+FR-5: Local Storage: Utilize a local JSON-based storage system (Chrome Storage API).
+
+FR-6: Global Search: Provide a dashboard-level search for links, titles, and notes.
+
+FR-7: Notes Engine: Allow users to add "General" and "Per Link" notes that persist in the database.
+
+FR-8: Multi-Format Export: Support "Save As" for .json, .csv, .html, and .txt.
+
+2.3 Advanced Content Recognition
+FR-9: Domain Specific Extraction:
+
+YouTube: Extract spatial features/video details.
+
+Social Media: Track FB/Social action links and activity patterns.
+
+FR-10: Bookmark Integration: One-click option to add saved links to the native Browser Bookmark manager.
+
+2.4 Future Technical Ecosystem (Roadmap)
+FR-11: Cross-Platform Sync: Interaction with Desktop and Mobile apps via centralized Login/Subscription.
+
+FR-12: Password/Task Management: Integrated vault for credentials and a built-in task manager for research workflows.
+
+FR-13: Sandbox/VM Features: Ability to test/load links in a Blackbox/Sandbox environment for security.
+
+FR-14: AI Research Agent: Intelligent agent for smart search and business solution suggestions based on saved links.
+
+3. Data Requirements
+3.1 Schema Definition
+Each entry must contain: | Field | Type | Description | | :--- | :--- | :--- | | id | UUID | Unique identifier | | title | String | Tab title | | url | URL | Primary Link | | timestamps | Array | List of all save events | | repeatCount | Integer | Total save frequency | | notes | String | User commentary | | metadata | Object | Domain-specific info (YouTube, FB, etc.) |
+
+4. Non-Functional Requirements
+4.1 Performance & Monitoring
+NFR-1: Performance Monitor: Integrated dashboard showing extension resource usage.
+
+NFR-2: Network Monitor: Log network activity associated with saved tabs.
+
+NFR-3: Error Reporting: Automatic bug/log setup for developer donation/support links.
+
+4.2 Security
+NFR-4: Encryption: Password-protected access to the dashboard.
+
+NFR-5: Privacy: "Show the place of stored data" option for transparency.
+
+4.3 UI/UX Design
+NFR-6: Themes: Support for multiple CSS themes and font styles.
+
+NFR-7: Responsive GUI: Dashboard must function on mobile viewports for remote data review.
+
+5. Development Strategy (SDLC)
+Phase A (Complete): Core architecture and basic popup.
+
+Phase B (Current): RGYB Logic, Local DBMS, HTML Dashboard.
+
+Phase C (Next): Social Media interaction, Note-taking expansion, Search optimization.
+
+Phase D (Future): AI Integration, Cross-Platform sync, Security Sandboxing. </markdown:Project SRS:SRS_Document.md>
+
+Summary of Consolidation
+User Manual: Written to be accessible for non-technical users in your professional fields (Finance, HRM, Engineering).
+
+SRS: I have taken the "massive list" of features you provided—from YouTube spatial features to AI agents and VM Sandboxes—and categorized them into a structured roadmap.
+
+Data Integrity: The SRS explicitly includes your requirement for Read-Only exports vs Active JSON DB and the RGYB color progression.
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabListExtensionDevPlan.txt
+File extension: .txt
+size_bytes: 7591
+File modified_utc: 2026-02-09T05:34:40.146053+00:00
+=================
+
+================================================================================
+
+Software Development Plan: OpenTabListInfoRestore ExtensionProject Vision: To create a comprehensive browser extension that allows users to save, manage, restore, and annotate lists of open tabs, evolving from a simple tab saver into a powerful information management tool.Development Methodology: An Agile (Iterative and Incremental) approach will be used. We will start by building a core, functional Minimum Viable Product (MVP) and then add features in subsequent, planned phases. This allows for rapid initial deployment, user feedback, and manageable development cycles.Phase 1: Minimum Viable Product (MVP) - "The Core Saver"Goal: To build the most fundamental, usable version of the extension. The focus is on simplicity, stability, and core functionality.A. Application Architecture & StructureThe initial file structure will be straightforward:/OpenTabListInfoRestoreExtension/
+|-- /images/
+|   |-- icon16.png
+|   |-- icon48.png
+|   |-- icon128.png
+|-- manifest.json
+|-- popup.html
+|-- popup.js
+|-- popup.css
+images/: Contains the required icons for the extension to display in the browser's toolbar and extension management page.manifest.json: The core configuration file for the Chrome extension. It will define:name, version, description, manifest_version.action: Specifies the popup file (popup.html) to be shown when the user clicks the extension icon.permissions: We will require tabs (to read open tabs) and storage (to save the list).popup.html: The HTML structure for the popup window. It will contain a title, a button to save tabs, and a list area.popup.js: The JavaScript logic for the popup. It will handle button clicks, use the chrome.tabs.query API to get all open tabs, and save them to chrome.storage.local. It will also be responsible for displaying the saved list in the popup.popup.css: Basic styling to ensure the popup is clean and readable.B. Application Setup & Development EnvironmentTools:A modern web browser (Google Chrome for development).A code editor (e.g., Visual Studio Code, Sublime Text).Setup Process:Create the folder structure and files as outlined above.Open Chrome and navigate to chrome://extensions.Enable "Developer mode" using the toggle switch.Click "Load unpacked" and select the /OpenTabListInfoRestoreExtension/ project folder.The extension icon will appear in the Chrome toolbar, ready for testing.C. DependenciesFor the MVP, there are no external dependencies. We will rely exclusively on the standard WebExtension APIs (HTML, CSS, JavaScript) provided by the browser.D. & E. The MVP Feature SetThis phase combines the "straightforward app" and "MVP" goals into one concrete deliverable:Click Extension Icon: A popup appears.Save Session: A single button, "Save All Open Tabs," captures the Title and URL of all non-pinned tabs in the current window.Data Storage: The list of tabs is saved into the browser's local, persistent storage (chrome.storage.local). This data will persist even if the browser is closed.Display List: The popup displays a simple, scrollable list of the most recently saved session's tabs.Restore Tab: Clicking on any tab in the list opens that URL in a new browser tab.F. MVP Testing PlanManual Unit Tests:Verify the extension loads correctly without errors.Confirm the popup opens and closes as expected.Click the "Save" button and check that the list populates correctly.Check the saved data structure in the browser's developer tools.Manual Functional Tests:Save a session with 1 tab, 5 tabs, and 20+ tabs to test performance and scrolling.Close the browser and reopen it to ensure the saved list persists.Click on various items in the saved list to confirm they open the correct pages.Run the save action in different windows to ensure it only captures the current window's tabs.Phase 2: The Information ManagerGoal: To enhance the MVP by adding data richness, duplicate handling, and basic management features.Features to Implement:Persistent, Appendable List: Modify the data structure to save multiple sessions. Instead of overwriting, new saves are added to a master list, grouped by a timestamp.Duplicate Link Handling: Before saving a new list, check the master list for existing URLs.Repeat Counter: If a URL already exists, instead of adding it again, increment a repeatCount property on the existing entry.Timestamp Logging: Each entry will have a dateSavedFirst timestamp and an array of dateSavedRepeat timestamps.Visual Repeat Indicators (RGYB Ticks/Stars):Implement the visual logic in popup.js to display colored indicators before the tab name based on the repeatCount.repeatCount: 1 -> Red tick (R)repeatCount: 2 -> Yellow tick (Y)repeatCount: 3 -> Green tick (G)repeatCount: 4 -> Blue tick (B)repeatCount: 5 -> Replaces ticks with one Red Star (★).repeatCount: 6 -> One Red Star + Red tick.This pattern continues, adding a new colored star for every 5 repeats.Item Deletion: Add a "delete" (X) button next to each entry in the popup list to remove it from storage.Phase 3: The Dashboard & Data PortabilityGoal: To create a dedicated management interface and allow users to export their data.Features to Implement:HTML Dashboard: Create an options.html page. This will be a full-tab interface for managing all saved data. A link to this page will be added to the popup.Table-Based UI: On the dashboard, display all saved links in a detailed table with sortable columns as you specified: Serial, Tab Name, Link Address, Date(s) Saved, Repeat Count, Notes, Remarks.Search & Filter: Add a search bar to the dashboard to instantly filter the list by tab title, URL, or notes.Note-Taking: Add functionality to the dashboard to write and save a short note for each saved link. The notes field will be added to the data model.Data Export: Implement "Export to JSON" and "Export to CSV" buttons. This will involve:Reading the entire master list from chrome.storage.Converting the JavaScript object into a JSON string or a CSV formatted string.Programmatically triggering a file download for the user.Grouping (Initial): Allow users to assign a "group name" to entries from the dashboard to categorize links.Phase 4 & Beyond: The Extended VisionGoal: To plan for the advanced, long-term features. These require significantly more complex architecture, including potential backend servers and external API integrations. They should be treated as separate, major future updates.User Accounts & Synchronization:Features: Login, Subscriptions, Multi-browser Sync.Requires: A backend server with a database (e.g., Firebase, Supabase) and an authentication system (e.g., OAuth). This is a major architectural shift from local storage.Advanced Integrations:Features: Interaction with Social Media, Desktop Apps.Requires: Extensive use of third-party APIs and potentially Native Messaging for desktop communication, which has high complexity and security hurdles.AI & Intelligence Layer:Features: AI Agent, Smart Search.Requires: Integration with a paid LLM API (like OpenAI's or Google's). This involves API key management and costs.System & Security Tools:Features: Performance Monitors, Sandbox features.Requires: Advanced browser permissions and capabilities that may not be available to standard extensions for security reasons. This area requires significant research into feasibility.Community & Project Health:Features: Documentation, Donation Links, Bug Reporting, Git Version Control.Action: These are crucial for a mature project. A project website or GitHub repository should be established early (around Phase 2 or 3) to house documentation, manage code, and interact with users.

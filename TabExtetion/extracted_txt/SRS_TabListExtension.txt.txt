@@ -1,0 +1,86 @@
+<markdown:Project SRS:SRS_Document.md>
+
+📑 Software Requirements Specification (SRS)
+Project Title: OpenTabListInfoRestoreExtension (v2.0 Roadmap) Status: Consolidated Requirements (Academic/Professional Grade)
+
+1. Introduction
+1.1 Purpose
+This document defines the complete functional and non-functional requirements for the OpenTabList extension, aggregating all features from basic tab saving to advanced AI-driven research assistance.
+
+1.2 Scope
+The system acts as a hybrid between a Bookmark Manager, Research Database, and Session Restore tool. It caters to users in Engineering, Science, Business, and Finance by providing deep logging and metadata for web-based activities.
+
+2. Functional Requirements
+2.1 Core Tab Management
+FR-1: Session Capture: Must capture Tab Name, URL, and metadata for all active tabs in a window.
+
+FR-2: Duplicate Prevention: Use URL as a primary key. No duplicate entries; instead, increment a repeatCount.
+
+FR-3: RGYB Visual Logic: Implement a Red-Yellow-Green-Blue (RGYB) tick/star system to indicate link frequency.
+
+FR-4: Temporal Logging: Append timestamps to a list for every repeat save action rather than overwriting.
+
+2.2 Data Management (DBMS)
+FR-5: Local Storage: Utilize a local JSON-based storage system (Chrome Storage API).
+
+FR-6: Global Search: Provide a dashboard-level search for links, titles, and notes.
+
+FR-7: Notes Engine: Allow users to add "General" and "Per Link" notes that persist in the database.
+
+FR-8: Multi-Format Export: Support "Save As" for .json, .csv, .html, and .txt.
+
+2.3 Advanced Content Recognition
+FR-9: Domain Specific Extraction:
+
+YouTube: Extract spatial features/video details.
+
+Social Media: Track FB/Social action links and activity patterns.
+
+FR-10: Bookmark Integration: One-click option to add saved links to the native Browser Bookmark manager.
+
+2.4 Future Technical Ecosystem (Roadmap)
+FR-11: Cross-Platform Sync: Interaction with Desktop and Mobile apps via centralized Login/Subscription.
+
+FR-12: Password/Task Management: Integrated vault for credentials and a built-in task manager for research workflows.
+
+FR-13: Sandbox/VM Features: Ability to test/load links in a Blackbox/Sandbox environment for security.
+
+FR-14: AI Research Agent: Intelligent agent for smart search and business solution suggestions based on saved links.
+
+3. Data Requirements
+3.1 Schema Definition
+Each entry must contain: | Field | Type | Description | | :--- | :--- | :--- | | id | UUID | Unique identifier | | title | String | Tab title | | url | URL | Primary Link | | timestamps | Array | List of all save events | | repeatCount | Integer | Total save frequency | | notes | String | User commentary | | metadata | Object | Domain-specific info (YouTube, FB, etc.) |
+
+4. Non-Functional Requirements
+4.1 Performance & Monitoring
+NFR-1: Performance Monitor: Integrated dashboard showing extension resource usage.
+
+NFR-2: Network Monitor: Log network activity associated with saved tabs.
+
+NFR-3: Error Reporting: Automatic bug/log setup for developer donation/support links.
+
+4.2 Security
+NFR-4: Encryption: Password-protected access to the dashboard.
+
+NFR-5: Privacy: "Show the place of stored data" option for transparency.
+
+4.3 UI/UX Design
+NFR-6: Themes: Support for multiple CSS themes and font styles.
+
+NFR-7: Responsive GUI: Dashboard must function on mobile viewports for remote data review.
+
+5. Development Strategy (SDLC)
+Phase A (Complete): Core architecture and basic popup.
+
+Phase B (Current): RGYB Logic, Local DBMS, HTML Dashboard.
+
+Phase C (Next): Social Media interaction, Note-taking expansion, Search optimization.
+
+Phase D (Future): AI Integration, Cross-Platform sync, Security Sandboxing. </markdown:Project SRS:SRS_Document.md>
+
+Summary of Consolidation
+User Manual: Written to be accessible for non-technical users in your professional fields (Finance, HRM, Engineering).
+
+SRS: I have taken the "massive list" of features you provided—from YouTube spatial features to AI agents and VM Sandboxes—and categorized them into a structured roadmap.
+
+Data Integrity: The SRS explicitly includes your requirement for Read-Only exports vs Active JSON DB and the RGYB color progression.

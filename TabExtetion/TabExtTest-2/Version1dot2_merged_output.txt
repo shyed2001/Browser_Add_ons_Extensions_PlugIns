@@ -1,0 +1,1087 @@
+
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest1\manifest.json
+File extension: .json
+size_bytes: 481
+File modified_utc: 2026-01-21T10:37:04.937841+00:00
+=================
+
+================================================================================
+
+{
+  "manifest_version": 3,
+  "name": "My Tab Lister",
+  "version": "1.0",
+  "description": "Lists all open tabs and their URLs.",
+  "permissions": [
+    "tabs"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon16.png", 
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  }
+}
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest1\popup.html
+File extension: .html
+size_bytes: 780
+File modified_utc: 2026-01-21T10:37:04.937841+00:00
+=================
+
+================================================================================
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Tabs</title>
+  <style>
+    body { font-family: Arial, sans-serif; width: 400px; max-height: 500px; overflow-y: auto; }
+    ul { list-style-type: none; padding: 0; }
+    li { padding: 5px; border-bottom: 1px solid #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+    li a { text-decoration: none; color: #333; }
+    li a:hover { color: #007bff; }
+    textarea { width: 98%; margin-top:10px; height: 100px; }
+    button { margin-top: 5px; padding: 8px; }
+  </style>
+</head>
+<body>
+  <h3>Currently Open Tabs:</h3>
+  <ul id="tabList">
+    </ul>
+  <textarea id="tabListText" readonly></textarea>
+  <button id="copyButton">Copy to Clipboard</button>
+  <script src="popup.js"></script>
+</body>
+</html>
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest1\popup.js
+File extension: .js
+size_bytes: 1450
+File modified_utc: 2026-01-21T10:37:04.937841+00:00
+=================
+
+================================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  const tabListElement = document.getElementById('tabList');
+  const tabListTextElement = document.getElementById('tabListText');
+  const copyButton = document.getElementById('copyButton');
+  let fullTextToCopy = '';
+
+  // Query for all tabs in the current window
+  chrome.tabs.query({currentWindow: true}, function(tabs) {
+    tabs.forEach(function(tab) {
+      const listItem = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = tab.url;
+      link.textContent = tab.title || tab.url; // Display title, or URL if title is empty
+      link.target = "_blank"; // Open link in new tab if clicked
+
+      listItem.appendChild(link);
+      tabListElement.appendChild(listItem);
+
+      // Prepare text for the textarea and copying
+      fullTextToCopy += `${tab.title || 'No Title'}\n${tab.url}\n\n`;
+    });
+    tabListTextElement.value = fullTextToCopy.trim();
+  });
+
+  copyButton.addEventListener('click', function() {
+    tabListTextElement.select();
+    try {
+      document.execCommand('copy');
+      copyButton.textContent = 'Copied!';
+      setTimeout(() => { copyButton.textContent = 'Copy to Clipboard'; }, 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      copyButton.textContent = 'Error Copying';
+    }
+    window.getSelection().removeAllRanges(); // Deselect
+  });
+});
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest-2\dashboard.html
+File extension: .html
+size_bytes: 2938
+File modified_utc: 2026-02-09T04:42:28.010642+00:00
+=================
+
+================================================================================
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Tab Info Restore Dashboard</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 20px; background: #f0f2f5; color: #1c1e21; }
+    .container { max-width: 1200px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; flex-wrap: wrap;}
+    input[type="text"] { padding: 10px; border: 1px solid #ddd; border-radius: 4px; width: 300px; }
+    .export-buttons button { padding: 8px 15px; margin-left: 5px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: #fff; }
+    .export-buttons button:hover { background: #f0f0f0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
+    th, td { padding: 12px; border: 1px solid #e1e4e8; text-align: left; font-size: 13px; }
+    th { background: #f8f9fa; position: sticky; top: 0; }
+    tr:hover { background: #fafafa; }
+    .repeat-icons { font-weight: bold; margin-right: 5px; }
+    .url-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #007bff; }
+    .notes-input { width: 90%; border: none; background: transparent; }
+    .notes-input:focus { background: #fffde7; outline: 1px solid #ffe082; }
+    .btn-open { color: #fff; background: #28a745; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; }
+    .btn-del { background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-left: 5px;}
+    .star-red { color: #d32f2f; }
+    .star-gold { color: #fbc02d; }
+    .tick-r { color: #f44336; }
+    .tick-y { color: #ffeb3b; text-shadow: 0 0 1px #000; }
+    .tick-g { color: #4caf50; }
+    .tick-b { color: #2196f3; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tab History Dashboard</h1>
+    
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Search by name, URL or notes...">
+      <div class="export-buttons">
+        <button id="copyAll">Copy All (JSON)</button>
+        <button id="exportCsv">Export CSV</button>
+        <button id="exportJson">Export JSON</button>
+        <button id="exportHtml">Export HTML</button>
+      </div>
+    </div>
+
+    <table id="dbTable">
+      <thead>
+        <tr>
+          <th width="40">#</th>
+          <th width="300">Tab Name</th>
+          <th>Link Address</th>
+          <th width="150">Last Saved</th>
+          <th width="80">Repeats</th>
+          <th width="150">Notes</th>
+          <th width="120">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <!-- Rows injected here -->
+      </tbody>
+    </table>
+  </div>
+  <script src="dashboard.js"></script>
+</body>
+</html>
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest-2\dashboard.js
+File extension: .js
+size_bytes: 5315
+File modified_utc: 2026-02-09T04:43:16.182875+00:00
+=================
+
+================================================================================
+
+let masterData = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadData();
+
+    document.getElementById('searchInput').addEventListener('input', filterTable);
+    document.getElementById('exportCsv').addEventListener('click', exportCSV);
+    document.getElementById('exportJson').addEventListener('click', exportJSON);
+    document.getElementById('exportHtml').addEventListener('click', exportHTML);
+    document.getElementById('copyAll').addEventListener('click', copyToClipboard);
+});
+
+function loadData() {
+    chrome.storage.local.get(['tabDatabase'], (result) => {
+        masterData = result.tabDatabase || [];
+        renderTable(masterData);
+    });
+}
+
+function getRepeatIndicators(count) {
+    let html = '';
+    const stars = Math.floor(count / 5);
+    const ticks = count % 5;
+
+    // 5 repeats = 1 Red Star
+    for (let i = 0; i < stars; i++) {
+        html += '<span class="star-red">★</span>';
+    }
+
+    // Ticks: 1=R, 2=Y, 3=G, 4=B
+    const tickColors = ['tick-r', 'tick-y', 'tick-g', 'tick-b'];
+    for (let i = 0; i < ticks; i++) {
+        if (i < 4) {
+            html += `<span class="${tickColors[i]}">✔</span>`;
+        }
+    }
+    return html;
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+
+    data.forEach((item, index) => {
+        const row = document.createElement('tr');
+        const indicators = getRepeatIndicators(item.repeatCount);
+        const lastTime = item.timestamps[item.timestamps.length - 1];
+
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${indicators} <strong>${item.title}</strong></td>
+            <td class="url-cell" title="${item.url}">${item.url}</td>
+            <td>${lastTime}</td>
+            <td>${item.repeatCount}</td>
+            <td><input class="notes-input" data-id="${item.id}" value="${item.notes}" placeholder="Add note..."></td>
+            <td>
+                <button class="btn-open" onclick="window.open('${item.url}', '_blank')">Open</button>
+                <button class="btn-del" data-id="${item.id}">Del</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    // Attach event listeners for dynamic elements
+    document.querySelectorAll('.notes-input').forEach(input => {
+        input.addEventListener('change', updateNote);
+    });
+    document.querySelectorAll('.btn-del').forEach(btn => {
+        btn.addEventListener('click', deleteItem);
+    });
+}
+
+function updateNote(e) {
+    const id = parseFloat(e.target.dataset.id);
+    const note = e.target.value;
+    const item = masterData.find(i => i.id === id);
+    if (item) {
+        item.notes = note;
+        saveToStorage();
+    }
+}
+
+function deleteItem(e) {
+    const id = parseFloat(e.target.dataset.id);
+    masterData = masterData.filter(i => i.id !== id);
+    saveToStorage();
+    renderTable(masterData);
+}
+
+function saveToStorage() {
+    chrome.storage.local.set({ 'tabDatabase': masterData });
+}
+
+function filterTable(e) {
+    const query = e.target.value.toLowerCase();
+    const filtered = masterData.filter(item => 
+        item.title.toLowerCase().includes(query) || 
+        item.url.toLowerCase().includes(query) || 
+        item.notes.toLowerCase().includes(query)
+    );
+    renderTable(filtered);
+}
+
+// EXPORT FUNCTIONS
+function exportCSV() {
+    let csvContent = "data:text/csv;charset=utf-8,Serial,Title,URL,RepeatCount,LastTimestamp,Notes\n";
+    masterData.forEach((item, index) => {
+        const row = [
+            index + 1,
+            `"${item.title.replace(/"/g, '""')}"`,
+            `"${item.url}"`,
+            item.repeatCount,
+            `"${item.timestamps[item.timestamps.length - 1]}"`,
+            `"${item.notes.replace(/"/g, '""')}"`
+        ].join(",");
+        csvContent += row + "\n";
+    });
+    downloadFile(csvContent, "tab_database.csv");
+}
+
+function exportJSON() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(masterData, null, 2));
+    downloadFile(dataStr, "tab_database.json");
+}
+
+function exportHTML() {
+    let html = `<html><head><title>Tab Export</title><style>table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ccc;padding:8px;}</style></head><body>`;
+    html += `<h1>Saved Tab List</h1><table><tr><th>Title</th><th>URL</th><th>Repeats</th><th>Notes</th></tr>`;
+    masterData.forEach(item => {
+        html += `<tr><td>${item.title}</td><td><a href="${item.url}">${item.url}</a></td><td>${item.repeatCount}</td><td>${item.notes}</td></tr>`;
+    });
+    html += `</table></body></html>`;
+    const dataStr = "data:text/html;charset=utf-8," + encodeURIComponent(html);
+    downloadFile(dataStr, "tab_database.html");
+}
+
+function downloadFile(content, fileName) {
+    const link = document.createElement("a");
+    link.setAttribute("href", content);
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function copyToClipboard() {
+    const text = JSON.stringify(masterData, null, 2);
+    navigator.clipboard.writeText(text).then(() => alert("All data copied to clipboard as JSON."));
+}
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest-2\InteractiveProjectHub.html
+File extension: .html
+size_bytes: 25256
+File modified_utc: 2026-02-09T05:02:33.781067+00:00
+=================
+
+================================================================================
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenTabList Info Restore - Interactive Project Hub</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome (for icons, using standard web fonts as requested) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chosen Palette: Tech Blue & Slate (Professional Documentation) with RGYB Functional Accents -->
+    <!-- Application Structure Plan: Dashboard-style layout. Top: Project Identity. Middle Left: Interactive Logic Simulator (Core Feature). Middle Right: Live Analytics (Chart.js). Bottom: Technical Documentation (Schema/Install). chosen to allow users to 'experience' the extension's logic before installing. -->
+    <!-- Visualization & Content Choices: 1. RGYB Simulator (HTML/JS) -> Goal: Explain complex visual logic -> Interaction: Click to increment -> Custom JS. 2. Storage Efficiency Chart (Chart.js) -> Goal: Visualize duplicate handling -> Interaction: Updates on 'Save' -> Chart.js. 3. Interactive Schema (HTML/Tailwind) -> Goal: Clarify data structure. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; }
+        .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 1.5rem; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-2px); }
+        .chart-container { position: relative; width: 100%; max-width: 100%; height: 300px; max-height: 300px; margin: 0 auto; }
+        .code-block { font-family: 'Courier New', Courier, monospace; background-color: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
+        .interactive-key { cursor: pointer; color: #60a5fa; border-bottom: 1px dotted #60a5fa; }
+        .interactive-key:hover { color: #93c5fd; }
+        .rgyb-tick-r { color: #ef4444; font-weight: bold; }
+        .rgyb-tick-y { color: #eab308; font-weight: bold; text-shadow: 0 0 1px #000; }
+        .rgyb-tick-g { color: #22c55e; font-weight: bold; }
+        .rgyb-tick-b { color: #3b82f6; font-weight: bold; }
+        .rgyb-star { color: #dc2626; font-size: 1.2em; }
+        
+        /* Custom scrollbar for cleanliness */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Navigation / Header -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-slate-800 tracking-tight">OpenTabList<span class="text-blue-600">Ext</span></span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <button onclick="scrollToSection('overview')" class="text-slate-600 hover:text-blue-600 font-medium">Overview</button>
+                    <button onclick="scrollToSection('logic')" class="text-slate-600 hover:text-blue-600 font-medium">Logic Simulator</button>
+                    <button onclick="scrollToSection('schema')" class="text-slate-600 hover:text-blue-600 font-medium">Data Schema</button>
+                    <button onclick="scrollToSection('install')" class="text-slate-600 hover:text-blue-600 font-medium">Install</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Intro Section -->
+        <section id="overview" class="text-center py-10">
+            <h1 class="text-4xl font-extrabold text-slate-900 mb-4">Web Research Archive & Manager</h1>
+            <p class="text-xl text-slate-600 max-w-3xl mx-auto mb-8">
+                A professional-grade browser extension designed to capture, archive, and manage web research sessions. 
+                Built for researchers and analysts to provide a permanent record of information sources.
+            </p>
+            <div class="flex justify-center gap-4 flex-wrap">
+                <span class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-1.5 rounded-full border border-blue-200">Phase: MVP / Info Manager</span>
+                <span class="bg-green-100 text-green-800 text-sm font-medium px-4 py-1.5 rounded-full border border-green-200">License: Proprietary</span>
+                <span class="bg-purple-100 text-purple-800 text-sm font-medium px-4 py-1.5 rounded-full border border-purple-200">Platform: Chrome Extension</span>
+            </div>
+        </section>
+
+        <!-- The "Wow" Factor: Interactive Logic Simulator -->
+        <section id="logic" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left: The RGYB Simulator -->
+            <div class="card bg-white">
+                <div class="border-b border-slate-100 pb-4 mb-4">
+                    <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-right text-blue-500"></i> RGYB Logic Simulator
+                    </h2>
+                    <p class="text-sm text-slate-500 mt-1">Experience the core duplicate handling feature. Click "Simulate Save" to see how the extension visualizes repeated visits to the same link.</p>
+                </div>
+
+                <div class="flex flex-col items-center justify-center space-y-6 py-8">
+                    <!-- Visual Display -->
+                    <div class="w-full bg-slate-50 rounded-lg p-6 flex items-center justify-between border border-slate-200">
+                        <div class="flex items-center gap-3">
+                            <div id="sim-indicator" class="text-3xl w-16 text-center transition-all duration-300 transform scale-100">
+                                <!-- Icon appears here -->
+                                <span class="text-slate-300 text-sm">New</span>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-slate-800">example-research-paper.pdf</div>
+                                <div class="text-xs text-slate-500">https://university.edu/research...</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs uppercase tracking-wide text-slate-400 font-semibold">Count</div>
+                            <div id="sim-count" class="text-2xl font-bold text-slate-700">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Explanation Box -->
+                    <div id="sim-explanation" class="w-full bg-blue-50 text-blue-800 p-4 rounded-md text-sm border-l-4 border-blue-500">
+                        Start by saving this link. The system will detect it's a new entry.
+                    </div>
+
+                    <!-- Action Button -->
+                    <button id="btn-simulate" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Simulate Save Action
+                    </button>
+                    
+                    <button id="btn-reset" class="text-slate-400 hover:text-slate-600 text-xs underline">Reset Simulation</button>
+                </div>
+            </div>
+
+            <!-- Right: Storage Analytics Chart -->
+            <div class="card flex flex-col">
+                <div class="border-b border-slate-100 pb-4 mb-4">
+                    <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-green-500"></i> Data Efficiency
+                    </h2>
+                    <p class="text-sm text-slate-500 mt-1">Visualizing how the extension manages storage. As you save, notice how 'Unique Links' stays stable while 'Total Saves' grows.</p>
+                </div>
+                
+                <div class="flex-grow flex items-center justify-center bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <div class="chart-container">
+                        <canvas id="storageChart"></canvas>
+                    </div>
+                </div>
+                <div class="mt-4 grid grid-cols-2 gap-4 text-center">
+                    <div class="bg-blue-50 p-2 rounded">
+                        <div class="text-xs text-blue-600 font-semibold">Total Actions</div>
+                        <div id="stat-total" class="text-xl font-bold text-blue-800">0</div>
+                    </div>
+                    <div class="bg-green-50 p-2 rounded">
+                        <div class="text-xs text-green-600 font-semibold">Unique Links</div>
+                        <div id="stat-unique" class="text-xl font-bold text-green-800">1</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="card border-t-4 border-blue-500">
+                <div class="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-4 text-lg">
+                    <i class="fa-solid fa-database"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">Centralized DBMS</h3>
+                <p class="text-sm text-slate-600">Uses <code>chrome.storage.local</code> to maintain a persistent link database that survives browser restarts.</p>
+            </div>
+            <div class="card border-t-4 border-purple-500">
+                <div class="h-10 w-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mb-4 text-lg">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">Temporal Logging</h3>
+                <p class="text-sm text-slate-600">Every save action is timestamped. Records initial discovery and every subsequent re-save event.</p>
+            </div>
+            <div class="card border-t-4 border-orange-500">
+                <div class="h-10 w-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center mb-4 text-lg">
+                    <i class="fa-solid fa-file-export"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">Export Capabilities</h3>
+                <p class="text-sm text-slate-600">Generate reports in CSV, JSON, and self-contained HTML formats for external analysis.</p>
+            </div>
+        </section>
+
+        <!-- Data Schema & Implementation -->
+        <section id="schema" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Schema Viewer -->
+            <div class="lg:col-span-2 card">
+                <h2 class="text-2xl font-bold text-slate-800 mb-4">Data Schema Structure</h2>
+                <p class="text-sm text-slate-600 mb-4">The core JSON structure used to store tabs in the <code>tabDatabase</code> array. Hover over keys for details.</p>
+                
+                <div class="code-block" id="json-viewer">
+{
+  <span class="text-purple-400">"id"</span>: <span class="text-green-400">"unique_id_123"</span>,
+  <span class="interactive-key" data-desc="The title of the webpage as displayed in the tab.">"title"</span>: <span class="text-green-400">"Research Paper: AI Trends"</span>,
+  <span class="interactive-key" data-desc="The full URL of the saved tab. Used as the unique key for duplicate checking.">"url"</span>: <span class="text-green-400">"https://example.com/paper"</span>,
+  <span class="interactive-key" data-desc="Integer tracking how many times this specific URL has been saved. Drives the RGYB visualization.">"repeatCount"</span>: <span class="text-orange-400">5</span>,
+  <span class="interactive-key" data-desc="Array of ISO timestamp strings for every save event.">"timestamps"</span>: [
+    <span class="text-green-400">"2023-10-27 10:00:00"</span>,
+    <span class="text-green-400">"2023-10-28 14:30:00"</span>
+  ],
+  <span class="interactive-key" data-desc="User-editable string for qualitative context.">"notes"</span>: <span class="text-green-400">"Critical reference for Chapter 2."</span>
+}
+                </div>
+                <div id="schema-desc" class="mt-4 h-12 text-sm text-blue-400 font-mono bg-slate-900 p-2 rounded border-l-4 border-blue-500 flex items-center">
+                    Hover over a property key above to see its description.
+                </div>
+            </div>
+
+            <!-- File Structure -->
+            <div class="card">
+                <h2 class="text-xl font-bold text-slate-800 mb-4">File Structure</h2>
+                <ul class="space-y-3 font-mono text-sm">
+                    <li class="flex items-start gap-2">
+                        <i class="fa-regular fa-file-code text-yellow-500 mt-1"></i>
+                        <div>
+                            <span class="font-bold text-slate-700">manifest.json</span>
+                            <div class="text-slate-500 text-xs">Configuration & permissions</div>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fa-brands fa-html5 text-orange-500 mt-1"></i>
+                        <div>
+                            <span class="font-bold text-slate-700">popup.html/js</span>
+                            <div class="text-slate-500 text-xs">Save trigger interface</div>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fa-solid fa-table-columns text-blue-500 mt-1"></i>
+                        <div>
+                            <span class="font-bold text-slate-700">dashboard.html/js</span>
+                            <div class="text-slate-500 text-xs">Management UI</div>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fa-regular fa-folder text-slate-400 mt-1"></i>
+                        <div>
+                            <span class="font-bold text-slate-700">/images</span>
+                            <div class="text-slate-500 text-xs">Icons (16, 48, 128px)</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Installation Section -->
+        <section id="install" class="card bg-slate-800 text-white">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                <i class="fa-solid fa-download"></i> Installation Guide
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <!-- Steps -->
+                <div class="bg-slate-700 p-4 rounded-lg relative">
+                    <div class="absolute -top-3 -left-3 bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg">1</div>
+                    <h4 class="font-bold mb-2 mt-2">Clone</h4>
+                    <p class="text-xs text-slate-300">Download repository to local drive.</p>
+                </div>
+                <div class="bg-slate-700 p-4 rounded-lg relative">
+                    <div class="absolute -top-3 -left-3 bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg">2</div>
+                    <h4 class="font-bold mb-2 mt-2">Navigate</h4>
+                    <p class="text-xs text-slate-300">Go to <code>chrome://extensions</code></p>
+                </div>
+                <div class="bg-slate-700 p-4 rounded-lg relative">
+                    <div class="absolute -top-3 -left-3 bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg">3</div>
+                    <h4 class="font-bold mb-2 mt-2">Enable Dev</h4>
+                    <p class="text-xs text-slate-300">Toggle "Developer Mode" ON.</p>
+                </div>
+                <div class="bg-slate-700 p-4 rounded-lg relative">
+                    <div class="absolute -top-3 -left-3 bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg">4</div>
+                    <h4 class="font-bold mb-2 mt-2">Load</h4>
+                    <p class="text-xs text-slate-300">Click "Load unpacked", select folder.</p>
+                </div>
+                <div class="bg-slate-700 p-4 rounded-lg relative">
+                    <div class="absolute -top-3 -left-3 bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg">5</div>
+                    <h4 class="font-bold mb-2 mt-2">Pin</h4>
+                    <p class="text-xs text-slate-300">Pin extension to toolbar.</p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center text-slate-400 text-sm py-8">
+            <p>© 2026 OpenTabList Extension Project. Proprietary / Developer Internal Use.</p>
+        </footer>
+
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // --- 1. Navigation Logic ---
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // --- 2. Schema Viewer Interactions ---
+        const schemaDesc = document.getElementById('schema-desc');
+        document.querySelectorAll('.interactive-key').forEach(key => {
+            key.addEventListener('mouseenter', () => {
+                schemaDesc.textContent = key.getAttribute('data-desc');
+                schemaDesc.classList.remove('text-blue-400');
+                schemaDesc.classList.add('text-white');
+            });
+            key.addEventListener('mouseleave', () => {
+                schemaDesc.textContent = 'Hover over a property key above to see its description.';
+                schemaDesc.classList.add('text-blue-400');
+                schemaDesc.classList.remove('text-white');
+            });
+        });
+
+        // --- 3. RGYB Logic Simulator ---
+        let simCount = 0;
+        const simIndicator = document.getElementById('sim-indicator');
+        const simCountDisplay = document.getElementById('sim-count');
+        const simExplanation = document.getElementById('sim-explanation');
+        const statTotal = document.getElementById('stat-total');
+        
+        // Data for Chart
+        const chartData = {
+            labels: ['Start'],
+            datasets: [
+                {
+                    label: 'Total Saves',
+                    data: [0],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Unique Links',
+                    data: [1], // Simulating just 1 unique link being saved repeatedly
+                    borderColor: '#22c55e',
+                    borderDash: [5, 5],
+                    tension: 0.4
+                }
+            ]
+        };
+
+        // Initialize Chart
+        const ctx = document.getElementById('storageChart').getContext('2d');
+        const storageChart = new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, suggestedMax: 10 }
+                }
+            }
+        });
+
+        function getIndicatorHTML(count) {
+            if (count === 0) return '<span class="text-slate-300 text-sm">New</span>';
+            
+            // Logic derived from README:
+            // 1=R, 2=Y, 3=G, 4=B, 5=Star, 6=Star+R...
+            let html = '';
+            const stars = Math.floor(count / 5);
+            const ticks = count % 5;
+
+            // Add Stars
+            for (let i = 0; i < stars; i++) {
+                html += '<i class="fa-solid fa-star rgyb-star"></i>';
+            }
+
+            // Add Ticks
+            // Tick Logic: 1=R, 2=Y, 3=G, 4=B. Note: ticks variable is remainder.
+            // If count is 5, ticks is 0 (Just star).
+            // If count is 6, ticks is 1 (Star + Red Tick).
+            
+            if (ticks === 1) html += '<i class="fa-solid fa-check rgyb-tick-r ml-1"></i>';
+            if (ticks === 2) html += '<i class="fa-solid fa-check rgyb-tick-r ml-1"></i><i class="fa-solid fa-check rgyb-tick-y"></i>'; 
+            // Wait, standard RGYB logic usually implies the *latest* tick is added or it progresses? 
+            // The README says: "first time repeat Red... second time repeat add an Y... 5th replace with Star".
+            // Implementation: We will stack them as per description.
+            // Correction based on exact text: "add an Y color tick... add ticks gradually"
+            
+            // Simplified stack logic for the visualizer to keep it clean:
+            if (ticks >= 1) html += ' <i class="fa-solid fa-check rgyb-tick-r"></i>';
+            if (ticks >= 2) html += ' <i class="fa-solid fa-check rgyb-tick-y"></i>';
+            if (ticks >= 3) html += ' <i class="fa-solid fa-check rgyb-tick-g"></i>';
+            if (ticks >= 4) html += ' <i class="fa-solid fa-check rgyb-tick-b"></i>';
+
+            return html;
+        }
+
+        function getExplanation(count) {
+            if (count === 1) return "First Repeat: Added a <strong>Red Tick</strong>. The system recognizes this is a duplicate.";
+            if (count === 2) return "Second Repeat: Added a <strong>Yellow Tick</strong>. You are visiting this resource frequently.";
+            if (count === 3) return "Third Repeat: Added a <strong>Green Tick</strong>. This is becoming a core resource.";
+            if (count === 4) return "Fourth Repeat: Added a <strong>Blue Tick</strong>. High frequency access detected.";
+            if (count === 5) return "Fifth Repeat: <strong>Reset to Star</strong>. Ticks are consolidated into a high-priority Star indicator.";
+            if (count > 5) return `High Frequency: ${count} repeats. Stars accumulate every 5 visits, with ticks filling in between.`;
+            return "New entry saved to database.";
+        }
+
+        document.getElementById('btn-simulate').addEventListener('click', () => {
+            simCount++;
+            
+            // Update Visuals
+            simCountDisplay.textContent = simCount;
+            simIndicator.innerHTML = getIndicatorHTML(simCount);
+            simExplanation.innerHTML = getExplanation(simCount);
+
+            // Animate Icon
+            simIndicator.classList.add('scale-125');
+            setTimeout(() => simIndicator.classList.remove('scale-125'), 200);
+
+            // Update Chart
+            const label = `Save ${simCount}`;
+            chartData.labels.push(label);
+            chartData.datasets[0].data.push(simCount + 1); // Total Saves increases
+            chartData.datasets[1].data.push(1); // Unique links stays flat (It's the same link)
+            
+            storageChart.update();
+            statTotal.textContent = simCount + 1; // +1 for the initial save
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            simCount = 0;
+            simCountDisplay.textContent = 0;
+            simIndicator.innerHTML = '<span class="text-slate-300 text-sm">New</span>';
+            simExplanation.textContent = 'Start by saving this link. The system will detect it\'s a new entry.';
+            
+            // Reset Chart
+            chartData.labels = ['Start'];
+            chartData.datasets[0].data = [0];
+            chartData.datasets[1].data = [1];
+            storageChart.update();
+            statTotal.textContent = 0;
+        });
+
+    </script>
+</body>
+</html>
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest-2\manifest.json
+File extension: .json
+size_bytes: 614
+File modified_utc: 2026-02-09T05:35:34.281148+00:00
+=================
+
+================================================================================
+
+{
+  "manifest_version": 3,
+  "name": "OpenTabListInfoRestore Version 1.1",
+  "version": "1.1",
+  "description": "Save, track, and manage browser tabs with repeat indicators and data export.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "downloads"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon16.png", 
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "options_page": "dashboard.html"
+}
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest-2\popup.html
+File extension: .html
+size_bytes: 1528
+File modified_utc: 2026-02-09T04:40:22.582730+00:00
+=================
+
+================================================================================
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>OpenTabList - Save</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; width: 320px; padding: 15px; margin: 0; background: #f9f9f9; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+    h3 { margin: 0; color: #333; font-size: 16px; }
+    .btn-primary { background: #007bff; color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+    .btn-primary:hover { background: #0056b3; }
+    .btn-secondary { background: #6c757d; color: white; border: none; padding: 8px; width: 100%; border-radius: 4px; cursor: pointer; margin-top: 8px; font-size: 12px; }
+    .status { font-size: 12px; color: #28a745; margin-top: 10px; text-align: center; display: none; }
+    .footer-links { margin-top: 15px; text-align: center; font-size: 11px; }
+    a { color: #007bff; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h3>Tab Restore Ext</h3>
+  </div>
+  
+  <button id="saveAllBtn" class="btn-primary">Save Current Tabs to DB</button>
+  <div id="statusMsg" class="status">Successfully Saved!</div>
+  
+  <button id="openDashboard" class="btn-secondary">Open HTML Dashboard</button>
+
+  <div class="footer-links">
+    <a href="#" id="viewStoragePlace">Where is my data stored?</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest-2\popup.js
+File extension: .js
+size_bytes: 1932
+File modified_utc: 2026-02-09T04:41:13.440369+00:00
+=================
+
+================================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  const saveBtn = document.getElementById('saveAllBtn');
+  const dashBtn = document.getElementById('openDashboard');
+  const statusMsg = document.getElementById('statusMsg');
+  const storageLink = document.getElementById('viewStoragePlace');
+
+  saveBtn.addEventListener('click', async () => {
+    const tabs = await chrome.tabs.query({ currentWindow: true });
+    const timestamp = new Date().toLocaleString();
+    
+    // Get existing data from storage
+    chrome.storage.local.get(['tabDatabase'], (result) => {
+      let db = result.tabDatabase || [];
+
+      tabs.forEach(tab => {
+        // Find if link already exists
+        const existingIndex = db.findIndex(item => item.url === tab.url);
+
+        if (existingIndex > -1) {
+          // Update Repeat Logic
+          db[existingIndex].repeatCount += 1;
+          db[existingIndex].timestamps.push(timestamp);
+          db[existingIndex].title = tab.title; // Update title if it changed
+        } else {
+          // New Entry
+          db.push({
+            id: Date.now() + Math.random(),
+            title: tab.title,
+            url: tab.url,
+            repeatCount: 1,
+            timestamps: [timestamp],
+            notes: "",
+            remarks: ""
+          });
+        }
+      });
+
+      // Save back to storage
+      chrome.storage.local.set({ 'tabDatabase': db }, () => {
+        statusMsg.style.display = 'block';
+        setTimeout(() => { statusMsg.style.display = 'none'; }, 3000);
+      });
+    });
+  });
+
+  dashBtn.addEventListener('click', () => {
+    chrome.runtime.openOptionsPage();
+  });
+
+  storageLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    alert("Data is stored locally in your browser's 'Extension Storage'. No data is sent to a server. You can export this to CSV, JSON, or HTML from the Dashboard.");
+  });
+});
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest-2\Project_Documentation.txt
+File extension: .txt
+size_bytes: 1998
+File modified_utc: 2026-02-09T05:00:04.927965+00:00
+=================
+
+================================================================================
+
+OpenTabListInfoRestoreExtensionA professional-grade browser extension designed to capture, archive, and manage web research sessions. This tool is built to assist in Academic Research, Engineering Documentation, and Business Analysis by providing a permanent record of information sources.📌 Project OverviewPhase: MVP / Information Manager (Phase 2-3)Core Function: Captures all open tabs, handles duplicates with a colored repeat-tracking system, and allows for data export in structured formats (JSON, CSV, HTML).🚀 FeaturesCentralized JSON DBMS: Uses chrome.storage.local to maintain a persistent link database.Repeat Tracking (RGYB Logic): - 🔴 Red Tick: 1st Repeat🟡 Yellow Tick: 2nd Repeat🟢 Green Tick: 3rd Repeat🔵 Blue Tick: 4th Repeat★ Red Star: 5th Repeat (Cycle resets with stars).Temporal Logging: Every save action is timestamped. The system records the initial discovery date and every subsequent time the link is re-saved.Export Capabilities: Generate read-only reports in CSV, JSON, and self-contained HTML formats.Searchable Dashboard: A full-page UI to filter by domain, title, or user-added notes.🛠 Installation & SetupClone or download this repository.Open Google Chrome and navigate to chrome://extensions/.Enable Developer Mode (top right).Click Load unpacked and select the extension folder.Pin the extension to your toolbar.📂 File Structuremanifest.json: Extension configuration and permissions (tabs, storage, downloads).popup.html/js: The primary interface for triggering "Save" actions.dashboard.html/js: The central "Frontend" for data management and reporting./images: Contains branding icons (16px, 48px, 128px).📊 Data SchemaEntries are stored as objects within a tabDatabase array:{
+  "id": "unique_id",
+  "title": "Page Title",
+  "url": "[https://example.com](https://example.com)",
+  "repeatCount": 5,
+  "timestamps": ["2023-10-27 10:00:00", "..."],
+  "notes": "User remarks here"
+}
+📝 LicenseProprietary / Developer Internal Use.
+
+=== FILE META ===
+File path: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\TabExtTest-2\README.md
+File extension: .md
+size_bytes: 2538
+File modified_utc: 2026-02-09T05:07:08.972794+00:00
+=================
+
+================================================================================
+
+<markdown:User Documentation:User\_Guide.md>
+
+
+
+🌐 OpenTabList Info Restore - User Guide
+
+Welcome to your advanced research and session management companion. This extension is designed to turn your messy browser tabs into a structured, searchable, and permanent database.
+
+
+
+🛠 1. Installation
+
+Since this is currently a developer-build extension, follow these steps:
+
+
+
+Download the extension folder to your computer.
+
+
+
+Open Google Chrome (or any Chromium-based browser).
+
+
+
+Navigate to chrome://extensions/.
+
+
+
+Switch the Developer mode toggle (top right) to ON.
+
+
+
+Click Load unpacked and select the extension folder.
+
+
+
+Pin the extension icon to your toolbar for easy access.
+
+
+
+💾 2. Saving Your Tabs
+
+Whenever you are working on a project, click the extension icon and select "Save Current Tabs to DB".
+
+
+
+What happens: The extension captures every open tab in your current window.
+
+
+
+Intelligent Tracking: If you have saved a link before, the extension won't create a duplicate. Instead, it adds a "Repeat Mark" and logs the new time you visited it.
+
+
+
+📊 3. The Dashboard (Your Research Hub)
+
+Click "Open HTML Dashboard" in the popup to manage your history.
+
+
+
+Search: Use the search bar to find links by title, URL, or your personal notes.
+
+
+
+Notes: Click in the "Notes" column to add context to any link (e.g., "Source for Section A").
+
+
+
+Open: Click "Open" to launch a saved link in a new tab.
+
+
+
+Delete: Remove individual entries you no longer need.
+
+
+
+🌈 4. Understanding Repeat Indicators (RGYB)
+
+We use a color-coded system to show you how often you revisit certain resources:
+
+
+
+🔴 Red Tick (✔): 1st Repeat.
+
+
+
+🟡 Yellow Tick (✔): 2nd Repeat.
+
+
+
+🟢 Green Tick (✔): 3rd Repeat.
+
+
+
+🔵 Blue Tick (✔): 4th Repeat.
+
+
+
+★ Red Star: 5th Repeat (Consolidates previous ticks).
+
+
+
+★✔... Star + Ticks: Shows visits beyond 5.
+
+
+
+📥 5. Exporting Data
+
+Your data is stored safely in your browser's local database. You can export it for "Read-Only" use in three formats:
+
+
+
+JSON: Best for developers or backups.
+
+
+
+CSV: Open in Excel or Google Sheets for data analysis.
+
+
+
+HTML: A beautiful, standalone report you can share or keep as a document.
+
+
+
+Note: Your data is private. It is stored locally on your machine and is never sent to a cloud server unless you choose to export it. </markdown:User Documentation:User\_Guide.md>
+
+
+
+<markdown:Project SRS:SRS\_Document.md>
+

@@ -1,0 +1,31 @@
+RUN LOG
+started_utc: 2026-02-09T09:38:08.121596+00:00
+ended_utc:   2026-02-09T09:38:08.147051+00:00
+output_dir:  F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion
+merged_file: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\20260209_093808_merged_output.txt
+per_file_dir: F:\GitHubDesktop\GitHubCloneFiles\Browser_Add_ons_Extensions_PlugIns\TabExtetion\extracted_txt
+llm_export_enabled: False
+total_selected_files:  2
+total_processed_files: 2
+total_skipped_files:   0
+
+=== SKIPPED FILES ===
+(none)
+
+=== JSON INDEX ===
+[
+  {
+    "path": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\SRS_TabListExtension.txt",
+    "ext": ".txt",
+    "size_bytes": 4257,
+    "modified_utc": "2026-02-09T05:08:13.361224+00:00",
+    "text_file": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabExtetion\\extracted_txt\\SRS_TabListExtension.txt.txt"
+  },
+  {
+    "path": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabListExtensionDevPlan.txt",
+    "ext": ".txt",
+    "size_bytes": 7591,
+    "modified_utc": "2026-02-09T05:34:40.146053+00:00",
+    "text_file": "F:\\GitHubDesktop\\GitHubCloneFiles\\Browser_Add_ons_Extensions_PlugIns\\TabExtetion\\extracted_txt\\TabListExtensionDevPlan.txt.txt"
+  }
+]
