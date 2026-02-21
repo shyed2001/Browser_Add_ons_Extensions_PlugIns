@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>OpenTabList - Save</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; width: 400px; padding: 15px; margin: 0; background: #f9f9f9; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+    h3 { margin: 0; color: #333; font-size: 16px; }
+    .btn-primary { background: #007bff; color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+    .btn-primary:hover { background: #0056b3; }
+    .btn-secondary { background: #6c757d; color: white; border: none; padding: 8px; width: 100%; border-radius: 4px; cursor: pointer; margin-top: 8px; font-size: 12px; }
+    .btn-secondary:hover { background: #5a6268; }
+    .status { font-size: 12px; color: #28a745; margin-top: 10px; text-align: center; display: none; }
+    .footer-links { margin-top: 15px; text-align: center; font-size: 11px; }
+    a { color: #007bff; text-decoration: none; }
+
+    /* Tab listing styles (from Extension 1) */
+    .section-label { font-size: 13px; color: #555; margin-top: 14px; margin-bottom: 6px; font-weight: 600; }
+    .tab-list { list-style-type: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; border: 1px solid #e1e4e8; border-radius: 4px; background: #fff; }
+    .tab-list li { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+    .tab-list li:last-child { border-bottom: none; }
+    .tab-list li a { text-decoration: none; color: #333; }
+    .tab-list li a:hover { color: #007bff; }
+    .tab-textarea { width: 100%; box-sizing: border-box; margin-top: 8px; height: 80px; font-size: 11px; border: 1px solid #ddd; border-radius: 4px; padding: 6px; resize: vertical; font-family: 'Segoe UI', monospace; }
+    .btn-copy { background: #17a2b8; color: white; border: none; padding: 7px; width: 100%; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 6px; transition: background 0.2s; }
+    .btn-copy:hover { background: #138496; }
+    .copy-status { font-size: 11px; color: #28a745; text-align: center; margin-top: 4px; display: none; }
+    .divider { border: none; border-top: 1px solid #e1e4e8; margin: 14px 0; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h3>Tab Restore Ext</h3>
+  </div>
+
+  <!-- Currently open tabs listing (from Extension 1) -->
+  <div class="section-label">Currently Open Tabs:</div>
+  <ul id="tabList" class="tab-list"></ul>
+
+  <textarea id="tabListText" class="tab-textarea" readonly></textarea>
+  <button id="copyButton" class="btn-copy">Copy to Clipboard</button>
+  <div id="copyStatus" class="copy-status">Copied!</div>
+
+  <hr class="divider">
+
+  <!-- Original Extension 2 controls -->
+  <button id="saveAllBtn" class="btn-primary">Save Current Tabs to DB</button>
+  <div id="statusMsg" class="status">Successfully Saved!</div>
+
+  <button id="openDashboard" class="btn-secondary">Open HTML Dashboard</button>
+
+  <div class="footer-links">
+    <a href="#" id="viewStoragePlace">Where is my data stored?</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

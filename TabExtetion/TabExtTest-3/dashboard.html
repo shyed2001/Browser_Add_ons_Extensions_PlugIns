@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Tab Info Restore Dashboard</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 20px; background: #f0f2f5; color: #1c1e21; }
+    .container { max-width: 1200px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; flex-wrap: wrap;}
+    input[type="text"] { padding: 10px; border: 1px solid #ddd; border-radius: 4px; width: 300px; }
+    .export-buttons button { padding: 8px 15px; margin-left: 5px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: #fff; }
+    .export-buttons button:hover { background: #f0f0f0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
+    th, td { padding: 12px; border: 1px solid #e1e4e8; text-align: left; font-size: 13px; }
+    th { background: #f8f9fa; position: sticky; top: 0; }
+    tr:hover { background: #fafafa; }
+    .repeat-icons { font-weight: bold; margin-right: 5px; }
+    .url-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #007bff; }
+    .notes-input { width: 90%; border: none; background: transparent; }
+    .notes-input:focus { background: #fffde7; outline: 1px solid #ffe082; }
+    .btn-open { color: #fff; background: #28a745; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; }
+    .btn-del { background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-left: 5px;}
+    .star-red { color: #d32f2f; }
+    .star-gold { color: #fbc02d; }
+    .tick-r { color: #f44336; }
+    .tick-y { color: #ffeb3b; text-shadow: 0 0 1px #000; }
+    .tick-g { color: #4caf50; }
+    .tick-b { color: #2196f3; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tab History Dashboard</h1>
+    
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Search by name, URL or notes...">
+      <div class="export-buttons">
+        <button id="copyAll">Copy All (JSON)</button>
+        <button id="exportCsv">Export CSV</button>
+        <button id="exportJson">Export JSON</button>
+        <button id="exportHtml">Export HTML</button>
+      </div>
+    </div>
+
+    <table id="dbTable">
+      <thead>
+        <tr>
+          <th width="40">#</th>
+          <th width="300">Tab Name</th>
+          <th>Link Address</th>
+          <th width="150">Last Saved</th>
+          <th width="80">Repeats</th>
+          <th width="150">Notes</th>
+          <th width="120">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <!-- Rows injected here -->
+      </tbody>
+    </table>
+  </div>
+  <script src="dashboard.js"></script>
+</body>
+</html>
