@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+dist-firefox/
+build/
+*.crx
+*.zip
+
+# Go build outputs
+companion/bin/
+companion/*.exe
+
+# .NET build outputs
+desktop/bin/
+desktop/obj/
+desktop/**/bin/
+desktop/**/obj/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Editor directories
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.docstates
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Changesets
+.changeset/*.md
+!.changeset/config.json
+
+# Temporary
+*.tmp
+*.temp
+
+# Stray build artifacts / scratch files
+packages/extension/dummy-non-existing-folder/
+DraftPlan1.txt
+SampleFirefoxInterface.png
+docs/architecture/

@@ -1,0 +1,10 @@
+{
+  "_template_note": "Run scripts/register-native-host.ps1 — do not use this file directly.",
+  "name": "com.mindvault.companion",
+  "description": "MindVault Companion Daemon — SQLite mirror, REST API, and native messaging bridge",
+  "path": "C:\\path\\to\\companion\\bin\\mvaultd.exe",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://YOUR_32_CHAR_EXTENSION_ID/"
+  ]
+}

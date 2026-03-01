@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MindVault Dashboard</title>
+  <link rel="manifest" href="/ui/manifest.json" />
+  <link rel="stylesheet" href="/ui/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <span class="logo">🧠 MindVault</span>
+        <button id="newLibBtn" class="btn-icon" title="New library">＋</button>
+      </div>
+      <div class="sidebar-nav" role="tablist">
+        <button class="snav-btn active" data-view="libraries"     title="Libraries">📚</button>
+        <button class="snav-btn"        data-view="all-sessions"  title="All Sessions">📋</button>
+        <button class="snav-btn"        data-view="all-tabs"      title="All Tabs">🗂️</button>
+        <button class="snav-btn"        data-view="search"        title="Search">🔍</button>
+        <button class="snav-btn"        data-view="settings"      title="Settings">⚙️</button>
+      </div>
+      <nav id="libList" class="lib-list">
+        <div class="loading-msg">Loading libraries…</div>
+      </nav>
+      <footer class="sidebar-footer">
+        <span id="companionStatus" class="status-dot status-ok" title="Companion running">● Connected</span>
+        <a href="/health" target="_blank" class="small-link">health</a>
+        <!-- Install prompt button — hidden until beforeinstallprompt fires -->
+        <button id="installBtn" class="install-btn hidden" title="Install MindVault as a desktop app">📲 Install</button>
+      </footer>
+    </aside>
+
+    <!-- Main content -->
+    <main id="main">
+
+      <!-- Sessions / Library panel -->
+      <section id="sessionsPanel" class="panel hidden">
+        <div class="panel-header">
+          <h2 id="libTitle">Library</h2>
+          <span id="entityCount" class="count-badge"></span>
+        </div>
+        <div class="lib-nav" role="tablist">
+          <button class="lnav-btn active" data-ltype="sessions">Sessions</button>
+          <button class="lnav-btn" data-ltype="bookmarks">Bookmarks</button>
+          <button class="lnav-btn" data-ltype="history">History</button>
+          <button class="lnav-btn" data-ltype="downloads">Downloads</button>
+        </div>
+        <!-- Sessions toolbar: show-archived toggle (visible only on Sessions tab) -->
+        <div id="sessionsToolbar" class="sessions-toolbar">
+          <button id="showArchivedBtn" class="toggle-archived" title="Toggle archived sessions">☐ Archived</button>
+        </div>
+        <div id="sessionList"  class="session-table-wrap"></div>
+        <div id="bookmarkList" class="tab-list hidden"></div>
+        <div id="historyList"  class="tab-list hidden"></div>
+        <div id="downloadList" class="tab-list hidden"></div>
+      </section>
+
+      <!-- Tabs panel -->
+      <section id="tabsPanel" class="panel hidden">
+        <div class="panel-header">
+          <button id="backBtn" class="btn-back">← Sessions</button>
+          <h2 id="sessionTitle">Session</h2>
+          <span id="tabCount" class="count-badge"></span>
+        </div>
+        <div class="search-bar">
+          <input id="tabSearch" type="search" placeholder="Search tabs…" />
+        </div>
+        <div id="tabList" class="tab-list"></div>
+      </section>
+
+      <!-- Master Sessions panel (All Sessions — cross-library) -->
+      <section id="masterSessionsPanel" class="panel hidden">
+        <div class="panel-header">
+          <h2>All Sessions</h2>
+          <span id="masterSessionCount" class="count-badge"></span>
+        </div>
+        <div class="sessions-toolbar">
+          <button id="masterShowArchivedBtn" class="toggle-archived" title="Toggle archived sessions">☐ Archived</button>
+        </div>
+        <div id="masterSessionList" class="session-table-wrap"></div>
+      </section>
+
+      <!-- Master Tabs panel (All Tabs — cross-library) -->
+      <section id="masterTabsPanel" class="panel hidden">
+        <div class="panel-header">
+          <h2>All Tabs</h2>
+          <span id="masterTabCount" class="count-badge"></span>
+        </div>
+        <div class="search-bar">
+          <input id="masterTabSearch" type="search" placeholder="Search title, URL, domain, session, library…" />
+        </div>
+        <!-- Export toolbar + column visibility toggle -->
+        <div id="masterTabsToolbar" class="master-tabs-toolbar">
+          <div class="mtb-export-group">
+            <button class="btn-mtb" id="mtbCopyJson">📋 Copy All (JSON)</button>
+            <button class="btn-mtb" id="mtbExportCsv">Export CSV</button>
+            <button class="btn-mtb" id="mtbExportJson">Export JSON</button>
+            <button class="btn-mtb" id="mtbExportHtml">Export HTML</button>
+            <button class="btn-mtb" id="mtbExportText">Export Text</button>
+          </div>
+          <button class="btn-mtb btn-col-toggle" id="mtbColsBtn">⊞ Columns ▾</button>
+        </div>
+        <!-- Column visibility dropdown — toggled by Columns button -->
+        <div id="colVisMenu" class="col-vis-menu hidden">
+          <label><input type="checkbox" data-col="num"     checked> #</label>
+          <label><input type="checkbox" data-col="colour"         > Colour</label>
+          <label><input type="checkbox" data-col="title"   checked> Title</label>
+          <label><input type="checkbox" data-col="domain"  checked> Domain</label>
+          <label><input type="checkbox" data-col="session" checked> Session</label>
+          <label><input type="checkbox" data-col="library" checked> Library</label>
+          <label><input type="checkbox" data-col="browser" checked> Browser</label>
+          <label><input type="checkbox" data-col="saved"   checked> Saved</label>
+          <label><input type="checkbox" data-col="repeats"        > Repeats</label>
+          <label><input type="checkbox" data-col="notes"   checked> Notes</label>
+          <label><input type="checkbox" data-col="actions" checked> Actions</label>
+        </div>
+        <!-- ISSUE-011 (FIXED v4.4.0): offline sessions auto-sync to SQLite on next daemon connect -->
+        <div id="issue011Notice" class="issue-notice" style="display:none">
+          ℹ️ Tabs saved while the companion was offline are automatically synced here when the
+          MindVault extension reconnects. If you don't see recent tabs, reload the extension
+          (or restart the browser) to trigger a sync.
+        </div>
+        <div id="masterTabList" class="tab-table-wrap"></div>
+      </section>
+
+      <!-- Global search panel -->
+      <section id="searchPanel" class="panel hidden">
+        <div class="panel-header"><h2>Search</h2></div>
+        <div class="search-bar">
+          <input id="globalSearch" type="search" placeholder="Search tabs across all libraries…" autofocus />
+        </div>
+        <div id="searchLibPicker" class="search-lib-picker">
+          <label class="muted" style="font-size:12px">Library:</label>
+          <select id="searchLibSel" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:6px;font-size:13px"></select>
+        </div>
+        <div id="searchResults" class="tab-list"><div class="empty-msg">Type to search…</div></div>
+      </section>
+
+      <!-- Settings panel -->
+      <section id="settingsPanel" class="panel hidden">
+        <div class="panel-header"><h2>Settings &amp; Info</h2></div>
+        <div id="settingsContent" class="settings-content"></div>
+      </section>
+
+      <!-- Welcome / empty state -->
+      <section id="welcomePanel" class="panel welcome">
+        <div class="welcome-inner">
+          <h1>🧠 MindVault</h1>
+          <p>Your unified browser knowledge vault.</p>
+          <p class="muted">Select a library on the left, or install the browser extension to start saving tabs.</p>
+          <div class="install-hints">
+            <div class="hint">📦 <strong>Chrome / Edge / Brave / Vivaldi / Opera</strong> — load <code>dist/</code></div>
+            <div class="hint">🦊 <strong>Firefox</strong> — load <code>dist-firefox/</code></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- New library modal -->
+  <div id="newLibModal" class="modal hidden">
+    <div class="modal-box">
+      <h3>New Library</h3>
+      <label>Name <input id="newLibName" type="text" placeholder="My Library" /></label>
+      <div class="modal-actions">
+        <button id="newLibCancel" class="btn-secondary">Cancel</button>
+        <button id="newLibCreate" class="btn-primary">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Library sidebar right-click context menu -->
+  <div id="libCtxMenu" class="ctx-menu hidden">
+    <button class="ctx-item" data-lib-action="rename">✏️ Rename Library</button>
+    <div class="ctx-divider"></div>
+    <button class="ctx-item ctx-danger" data-lib-action="delete">🗑️ Delete Library</button>
+  </div>
+
+  <!-- Session context menu (shared between per-library and master views) -->
+  <div id="ctxMenu" class="ctx-menu hidden">
+    <button class="ctx-item" data-action="open">📂 Open</button>
+    <button class="ctx-item" data-action="rename">✏️ Rename</button>
+    <div class="ctx-divider"></div>
+    <button class="ctx-item ctx-archive-btn"  data-action="archive">🗃️ Archive</button>
+    <button class="ctx-item ctx-restore-btn"  data-action="restore" style="display:none">📤 Restore</button>
+    <div class="ctx-divider"></div>
+    <button class="ctx-item ctx-danger" data-action="delete">🗑️ Remove from history</button>
+    <button class="ctx-item ctx-danger" data-action="delete-tabs">💥 Delete session + all tabs</button>
+  </div>
+
+  <script src="/ui/app.js"></script>
+  <script>
+    /* Register service worker — must be same origin, path within scope /ui/ */
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/ui/sw.js', { scope: '/ui/' })
+        .catch((err) => console.warn('[MV] SW registration failed:', err));
+    }
+  </script>
+</body>
+</html>

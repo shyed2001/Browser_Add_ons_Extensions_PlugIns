@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:MindVault.Desktop.ViewModels"
+             xmlns:m="clr-namespace:MindVault.Desktop.Models"
+             x:Class="MindVault.Desktop.Pages.LibrariesPage"
+             x:DataType="vm:LibrariesViewModel"
+             Title="Libraries">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="16">
+
+        <!-- Header status bar -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+            <Label Text="{Binding StatusMessage}"
+                   Style="{StaticResource SubHeadline}"
+                   VerticalOptions="Center" />
+            <Button Grid.Column="1"
+                    Text="↻ Refresh"
+                    Command="{Binding LoadCommand}"
+                    IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+        </Grid>
+
+        <!-- Loading indicator -->
+        <ActivityIndicator Grid.Row="1"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
+
+        <!-- Libraries list -->
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Libraries}"
+                        SelectedItem="{Binding SelectedLibrary}"
+                        SelectionMode="Single"
+                        IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                        SelectionChangedCommand="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext}"
+                        EmptyView="No libraries found. Ensure the companion daemon is running.">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="m:Library">
+                    <Frame Margin="0,4" Padding="12" CornerRadius="8"
+                           HasShadow="True">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackLayout>
+                                <Label Text="{Binding Name}"
+                                       FontSize="16" FontAttributes="Bold" />
+                                <Label Text="{Binding Description}"
+                                       FontSize="12"
+                                       TextColor="Gray"
+                                       IsVisible="{Binding Description, Converter={StaticResource StringToBoolConverter}}" />
+                                <Label FontSize="11" TextColor="LightGray">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="ID: " />
+                                            <Span Text="{Binding Id}" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                            </StackLayout>
+                            <Label Grid.Column="1"
+                                   Text="🔒"
+                                   FontSize="20"
+                                   IsVisible="{Binding IsEncrypted}"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Footer: open sessions for selected library -->
+        <Button Grid.Row="2"
+                Text="Open Sessions →"
+                Margin="0,12,0,0"
+                IsEnabled="{Binding SelectedLibrary, Converter={StaticResource IsNotNullConverter}}"
+                Clicked="OnOpenSessionsClicked" />
+    </Grid>
+</ContentPage>

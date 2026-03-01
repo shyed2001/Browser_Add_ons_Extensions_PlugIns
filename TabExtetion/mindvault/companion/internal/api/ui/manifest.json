@@ -1,0 +1,26 @@
+{
+  "name": "MindVault Dashboard",
+  "short_name": "MindVault",
+  "description": "Unified browser knowledge vault — view all saved tabs, sessions, bookmarks, history and downloads.",
+  "start_url": "/ui/",
+  "scope": "/ui/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0f0f10",
+  "theme_color": "#7c6aff",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/ui/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/ui/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

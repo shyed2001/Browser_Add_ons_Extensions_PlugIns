@@ -1,0 +1,43 @@
+{
+  "manifest_version": 2,
+  "name": "MindVault",
+  "version": "2.0.0",
+  "description": "Personal knowledge vault — save, track and manage your tabs, bookmarks, history and downloads.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "downloads",
+    "history",
+    "bookmarks",
+    "nativeMessaging",
+    "*://*/*",
+    "file:///*"
+  ],
+  "browser_action": {
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "options_ui": {
+    "page": "src/dashboard/dashboard.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "background": {
+    "scripts": ["src/background/index.ts"],
+    "persistent": false
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "mindvault@mindvault.app",
+      "strict_min_version": "115.0"
+    }
+  }
+}
