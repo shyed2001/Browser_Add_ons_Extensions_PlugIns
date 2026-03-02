@@ -16,7 +16,7 @@
 
 # MindVault — Master Folder Index
 
-> **Last updated**: 2026-03-01 (v4.4.0)  
+> **Last updated**: 2026-03-03 (v4.6.0)
 > Full tree → `docs/PROJECT-STRUCTURE.md` | Files → `docs/MASTER_FILE_INDEX.md`
 
 ---

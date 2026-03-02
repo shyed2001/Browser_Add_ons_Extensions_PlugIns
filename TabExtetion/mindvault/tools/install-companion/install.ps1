@@ -8,7 +8,7 @@
 #   powershell -ExecutionPolicy Bypass -File tools\install-companion\install.ps1 -AutoStart -Force
 #
 # PARAMETERS:
-#   -AutoStart     Register Task Scheduler logon job (no admin required)
+#   -AutoStart     Register Task Scheduler logon job (no admin required) — ON by default
 #   -Force         Stop and replace daemon without prompting
 #   -NoExtension   Skip opening browser extension install pages
 #   -BinaryPath    Override auto-detected source mvaultd.exe path
@@ -18,7 +18,7 @@
 param(
     [string]$BinaryPath  = "",
     [string]$ExtDir      = "",
-    [switch]$AutoStart,
+    [switch]$AutoStart = $true,
     [switch]$Force,
     [switch]$NoExtension
 )
@@ -215,22 +215,28 @@ if ($AutoStart) {
 # ── Step 8: Start daemon + health check ───────────────────────────────────────
 Write-Host "  ► [8/8] Starting companion daemon..." -ForegroundColor Cyan
 Start-Process -FilePath $InstalledBin -WindowStyle Hidden
-Start-Sleep -Seconds 2
 
-$proc = Get-Process -Name "mvaultd" -ErrorAction SilentlyContinue
-if ($proc) {
-    Write-Host "  ✓ Daemon running (PID $($proc.Id))" -ForegroundColor Green
-} else {
-    Write-Host "  ✗ Daemon did not start. Try manually:" -ForegroundColor Red
-    Write-Host "    Start-Process '$InstalledBin'" -ForegroundColor DarkGray
-    exit 1
+# Retry health check up to 5 times (1 s apart) — daemon may need time for DB migration
+$healthOk = $false
+for ($i = 1; $i -le 5; $i++) {
+    Start-Sleep -Seconds 1
+    $proc = Get-Process -Name "mvaultd" -ErrorAction SilentlyContinue
+    if (-not $proc) {
+        Write-Host "  ✗ Daemon did not start. Try manually:" -ForegroundColor Red
+        Write-Host "    Start-Process '$InstalledBin'" -ForegroundColor DarkGray
+        exit 1
+    }
+    try {
+        $health = Invoke-WebRequest "http://127.0.0.1:47821/health" -UseBasicParsing -TimeoutSec 3
+        Write-Host "  ✓ Daemon running (PID $($proc.Id)) — Health OK" -ForegroundColor Green
+        $healthOk = $true
+        break
+    } catch {
+        Write-Host "    Waiting for daemon... ($i/5)" -ForegroundColor DarkGray
+    }
 }
-
-try {
-    $health = Invoke-WebRequest "http://127.0.0.1:47821/health" -UseBasicParsing -TimeoutSec 5
-    Write-Host "  ✓ Health check OK: $($health.Content)" -ForegroundColor Green
-} catch {
-    Write-Host "  ! Health check timed out — daemon may still be initialising" -ForegroundColor Yellow
+if (-not $healthOk) {
+    Write-Host "  ! Health check timed out after 5 attempts — daemon may still be initialising" -ForegroundColor Yellow
     Write-Host "    Check: http://127.0.0.1:47821/health" -ForegroundColor DarkGray
 }
 

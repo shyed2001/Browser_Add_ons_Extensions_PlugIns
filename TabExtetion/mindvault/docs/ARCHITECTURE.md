@@ -1,7 +1,7 @@
 # MindVault — Architecture Document
 
-**Version:** 4.4
-**Date:** 2026-03-01
+**Version:** 4.6.0
+**Date:** 2026-03-03
 
 ---
 
@@ -44,11 +44,17 @@ MindVault follows a **layered, offline-first** architecture with zero cloud depe
 └───────────────────────┬─────────────────────────────┘
                         │ REST :47821 (localhost)
 ┌───────────────────────▼─────────────────────────────┐
-│       .NET MAUI Desktop App (Phase 3)                │
-│  Pages/ │ ViewModels/ │ Services/CompanionApiClient  │
-│  Libraries │ Sessions │ Tabs │ Search                │
+│       Companion Web UI  (v4.0.0+ — embedded /ui/)    │
+│  📚 Libraries │ 📋 All Sessions │ 🗂️ All Tabs        │
+│  🔍 Search    │ ⚙️ Settings                          │
+│  (SPA served from Go embed, dark/light themes)       │
 └─────────────────────────────────────────────────────┘
 ```
+
+> **Note:** .NET MAUI desktop app (Phase 3 original plan) is kept as scaffold (`desktop/`)
+> but the **Companion Web UI** is the primary desktop experience. It is served directly
+> by the companion daemon at `http://127.0.0.1:47821/ui/` — no extra install needed.
+> MAUI mobile remains in plan for Phase 4.
 
 ---
 
@@ -80,7 +86,28 @@ User clicks "Save Tab"
   → popup re-renders count
 ```
 
-### 2.4 Data Flow — Offline Sync (v4.4.0 ISSUE-011 fix)
+### 2.4 Data Flow — Machine Sync (v4.5.0)
+```
+Option A — Extension-initiated (Extension Dashboard button):
+  User clicks [☁ Machine Sync] in Extension Dashboard
+  → dashboard/index.ts: handleMachineSync()
+  → forceAllSync()   ← pushes ALL sessions regardless of syncedToCompanion flag
+      for each library:
+        libraryExistsInCompanion() → if not, POST /libraries first
+        getSessionsByLibrary() → for each session:
+          pushSession() + pushTabs()
+  → returns count of sessions pushed
+
+Option B — Companion-initiated (Companion All Tabs button):
+  User clicks [☁ Machine Sync] in Companion All Tabs toolbar
+  → app.js: triggerMachineSync() → POST /sync    ← sets syncPending=true in Go
+  → app.js polls GET /sync/pending every 2s for up to 35s
+  → Extension SW polls GET /sync/pending every 30s (setInterval in background/index.ts)
+  → Extension detects pending=true → await forceAllSync() → POST /sync/done
+  → Companion detects done → stopMachineSyncPoll() → loadMasterTabs(true)
+```
+
+### 2.5 Data Flow — Offline Sync (v4.4.0 ISSUE-011 fix)
 ```
 Extension service worker wakes (browser start / install / update)
   → onStartup() in background/index.ts
@@ -179,7 +206,7 @@ internal/
   api/
     server.go                — net/http mux, CORS, no-cache, auth middleware, all routes
     handlers/handlers.go     — ALL HTTP handlers in one file (~550 lines)
-    ui/                      — embedded web UI (index.html, style.css, app.js ~1700 lines, sw.js)
+    ui/                      — embedded web UI (index.html, style.css, app.js ~1900 lines, sw.js)
   db/
     sqlite.go                — ALL DB CRUD + migrations helper (~450 lines, modernc.org/sqlite)
     migrations/              — 001_initial.sql, 002_source_browser.sql
@@ -189,7 +216,7 @@ internal/
     native.go                — native messaging stdin/stdout protocol (stdin→handler→stdout)
 ```
 
-### REST API Map (v4.4.0)
+### REST API Map (v4.5.2)
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
@@ -217,9 +244,16 @@ internal/
 | GET | /sessions | Yes | All sessions (cross-library) |
 | GET | /tabs | Yes | All tabs (cross-library, LEFT JOIN sessions+libraries) |
 | GET | /search | Yes | Full-text search (`?q=&libId=`) |
+| POST | /sync | Yes | Request Machine Sync (sets syncPending=true in memory) |
+| GET | /sync/pending | Yes | Poll Machine Sync status |
+| POST | /sync/done | Yes | Extension notifies sync complete |
+| POST | /backup | Yes | Create DB backup (`?retain=N` days, default 30) |
+| GET | /backups | Yes | List all backup files (newest-first) |
+| POST | /restore/{filename} | Yes | Restore DB from backup (close → copy → reopen) |
+| DELETE | /backups/{filename} | Yes | Delete a backup file |
 
 Auth: `X-MindVault-Token: <token>` header on all `Yes` endpoints.
-Token: generated at first run, stored in `~/.mindvault/token`.
+Token: generated at first run, stored in `%APPDATA%\MindVault\token`.
 
 ---
 

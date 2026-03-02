@@ -2,6 +2,19 @@
 // Talks to the companion REST API (same origin: http://127.0.0.1:47821)
 'use strict';
 
+// ── Toast notification (replaces alert()) ─────────────────────────────────────
+function showToast(msg, isError = false, durationMs = 3500) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (isError ? ' error' : '');
+  el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 300);
+  }, durationMs);
+}
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let token            = '';
 let activeLibId      = '';
@@ -11,6 +24,14 @@ let activeMasterView = ''; // 'all-sessions' | 'all-tabs' | ''
 let allTabs          = []; // current session tabs (per-session search)
 let allMasterTabs    = []; // all tabs for master view search
 let masterTabSortCol = 'savedAt'; // column key for All Tabs sort
+
+// ── All Tabs performance: cache + pagination ───────────────────────────────────
+let masterTabsCache   = null;   // last fetched raw array (null = stale)
+let masterTabsCacheAt = 0;      // epoch ms of last fetch
+const MASTER_TABS_TTL = 30_000; // 30 s — re-fetch if older than this
+const PAGE_SIZE       = 200;    // rows rendered per page
+let   masterTabsPage  = 1;      // current page (1 = first 200, 2 = first 400, …)
+let   _searchDebounce = null;   // debounce timer for search input
 let masterTabSortDir = 'desc';    // 'asc' | 'desc'
 let cachedLibs       = [];
 let cachedSessions   = []; // currently rendered sessions (for re-sort)
@@ -25,6 +46,9 @@ let ctxContainerEl = null;
 let ctxShowLibCol = false;
 let ctxLib        = null; // library under right-click (lib context menu)
 let searchTimer   = null;
+// Machine Sync state
+let machineSyncPolling   = false; // true while companion is waiting for extension SWs
+let machineSyncPollTimer = null;  // setInterval handle for companion-side 2s poll
 
 // ── Column visibility + widths (All Tabs master table) ────────────────────────
 // Persisted in localStorage; restored on boot via applyColWidthsToCSS().
@@ -82,6 +106,8 @@ const ctxMenu             = document.getElementById('ctxMenu');
 const libCtxMenu          = document.getElementById('libCtxMenu');
 const colVisMenu          = document.getElementById('colVisMenu');
 const issue011Notice      = document.getElementById('issue011Notice');
+const mtbMachineSyncBtn   = document.getElementById('mtbMachineSyncBtn');
+const machineSyncNotice   = document.getElementById('machineSyncNotice');
 
 // ── API helpers ───────────────────────────────────────────────────────────────
 async function apiGet(path) {
@@ -190,7 +216,7 @@ function startLibRename(el, lib) {
     const val = inp.value.trim();
     if (val && val !== old) {
       try { await apiPatch(`/libraries/${lib.id}`, { name: val }); }
-      catch (e) { alert('Rename failed: ' + e.message); }
+      catch (e) { showToast('Rename failed: ' + e.message, true); }
     }
     await loadLibraries();
   }
@@ -433,7 +459,7 @@ async function handleSessionAction(action, session, libId, containerEl, libsMap,
         if (!row.querySelector('.archived-badge'))
           row.querySelector('.sr-name').insertAdjacentHTML('beforeend', '<span class="archived-badge">archived</span>');
       }
-    } catch (e) { alert('Archive failed: ' + e.message); }
+    } catch (e) { showToast('Archive failed: ' + e.message, true); }
     return;
   }
   if (action === 'restore') {
@@ -442,7 +468,7 @@ async function handleSessionAction(action, session, libId, containerEl, libsMap,
       session.archived = false;
       const row = containerEl.querySelector(`.session-row[data-id="${session.id}"]`);
       if (row) { row.classList.remove('archived'); row.querySelector('.archived-badge')?.remove(); }
-    } catch (e) { alert('Restore failed: ' + e.message); }
+    } catch (e) { showToast('Restore failed: ' + e.message, true); }
     return;
   }
   if (action === 'delete') {
@@ -454,7 +480,7 @@ async function handleSessionAction(action, session, libId, containerEl, libsMap,
       updateEntityCount();
       if (activeMasterView === 'all-sessions')
         masterSessionCount.textContent = `${cachedSessions.length} session${cachedSessions.length !== 1 ? 's' : ''}`;
-    } catch (e) { alert('Delete failed: ' + e.message); }
+    } catch (e) { showToast('Delete failed: ' + e.message, true); }
     return;
   }
   if (action === 'delete-tabs') {
@@ -466,7 +492,7 @@ async function handleSessionAction(action, session, libId, containerEl, libsMap,
       updateEntityCount();
       if (activeMasterView === 'all-sessions')
         masterSessionCount.textContent = `${cachedSessions.length} session${cachedSessions.length !== 1 ? 's' : ''}`;
-    } catch (e) { alert('Delete failed: ' + e.message); }
+    } catch (e) { showToast('Delete failed: ' + e.message, true); }
   }
 }
 
@@ -494,7 +520,7 @@ function doRenameSession(rowEl, session, libId, containerEl, libsMap, showLibCol
       try {
         await apiPatch(`/libraries/${libId}/sessions/${session.id}`, { name: newName });
         session.name = newName;
-      } catch (e) { alert('Rename failed: ' + e.message); session.name = origName; }
+      } catch (e) { showToast('Rename failed: ' + e.message, true); session.name = origName; }
     }
     rowEl.classList.remove('renaming');
     restoreNameCell(nameCell, session);
@@ -544,12 +570,26 @@ async function loadMasterSessions() {
   }
 }
 
-async function loadMasterTabs() {
+async function loadMasterTabs(force = false) {
+  const now = Date.now();
+  if (!force && masterTabsCache && (now - masterTabsCacheAt) < MASTER_TABS_TTL) {
+    // Cache hit — skip fetch, just re-render from cached data
+    allMasterTabs = masterTabsCache;
+    const n = allMasterTabs.length;
+    masterTabCount.textContent = `${n} tab${n !== 1 ? 's' : ''}`;
+    masterTabsPage = 1;
+    renderMasterTabsTable(allMasterTabs);
+    return;
+  }
   masterTabList.innerHTML = '<div class="loading-msg">Loading…</div>';
   masterTabSearch.value   = '';
   try {
     const tabs    = await apiGet('/tabs');
     allMasterTabs = tabs || [];
+    // Update cache
+    masterTabsCache   = allMasterTabs;
+    masterTabsCacheAt = Date.now();
+    masterTabsPage    = 1;
     const n = allMasterTabs.length;
     masterTabCount.textContent = `${n} tab${n !== 1 ? 's' : ''}`;
     renderMasterTabsTable(allMasterTabs);
@@ -559,22 +599,26 @@ async function loadMasterTabs() {
 }
 
 masterTabSearch.addEventListener('input', () => {
-  const q = masterTabSearch.value.trim().toLowerCase();
-  const filtered = q ? allMasterTabs.filter(t =>
-    (t.title        || '').toLowerCase().includes(q) ||
-    (t.url          || '').toLowerCase().includes(q) ||
-    (t.sessionName  || '').toLowerCase().includes(q) ||
-    (t.libraryName  || '').toLowerCase().includes(q) ||
-    (t.sourceBrowser|| '').toLowerCase().includes(q)
-  ) : allMasterTabs;
-  renderMasterTabsTable(filtered);
+  clearTimeout(_searchDebounce);
+  _searchDebounce = setTimeout(() => {
+    masterTabsPage = 1; // reset to first page on new search
+    const q = masterTabSearch.value.trim().toLowerCase();
+    const filtered = q ? allMasterTabs.filter(t =>
+      (t.title        || '').toLowerCase().includes(q) ||
+      (t.url          || '').toLowerCase().includes(q) ||
+      (t.sessionName  || '').toLowerCase().includes(q) ||
+      (t.libraryName  || '').toLowerCase().includes(q) ||
+      (t.sourceBrowser|| '').toLowerCase().includes(q)
+    ) : allMasterTabs;
+    renderMasterTabsTable(filtered);
+  }, 250);
 });
 
 // ── All Tabs helpers ──────────────────────────────────────────────────────────
 
 /** Default CSS custom property values for each column. */
 const COL_DEFAULTS = {
-  num: '32px', colour: '16px', title: '1fr', domain: '110px',
+  num: '32px', colour: '16px', title: 'minmax(160px, 1fr)', domain: '110px',
   session: '120px', library: '100px', browser: '80px', saved: '76px',
   repeats: '64px', notes: '140px', actions: '76px',
 };
@@ -650,7 +694,7 @@ function dlBlob(content, filename, mime) {
 function masterTabsExport(fmt) {
   const ts   = new Date().toISOString().slice(0, 10);
   const data = allMasterTabs;
-  if (!data.length) { alert('No tabs to export.'); return; }
+  if (!data.length) { showToast('No tabs to export.', true); return; }
   if (fmt === 'json') {
     dlBlob(JSON.stringify(data, null, 2), `mv-tabs-${ts}.json`, 'application/json'); return;
   }
@@ -694,8 +738,8 @@ function masterTabsExport(fmt) {
 function wireTabsToolbar() {
   document.getElementById('mtbCopyJson')?.addEventListener('click', () =>
     navigator.clipboard.writeText(JSON.stringify(allMasterTabs, null, 2))
-      .then(() => alert(`Copied ${allMasterTabs.length} tabs as JSON`))
-      .catch(e => alert('Copy failed: ' + e.message)));
+      .then(() => showToast(`Copied ${allMasterTabs.length} tabs as JSON`))
+      .catch(e => showToast('Copy failed: ' + e.message, true)));
   ['Csv', 'Json', 'Html', 'Text'].forEach(f =>
     document.getElementById(`mtbExport${f}`)?.addEventListener('click',
       () => masterTabsExport(f.toLowerCase())));
@@ -728,6 +772,64 @@ function wireTabsToolbar() {
       renderMasterTabsTable(allMasterTabs);
     });
   });
+
+  // ── Machine Sync button ─────────────────────────────────────────────────────
+  mtbMachineSyncBtn?.addEventListener('click', async () => {
+    if (machineSyncPolling) return; // debounce
+    await triggerMachineSync();
+  });
+}
+
+/**
+ * triggerMachineSync — POST /sync to set syncPending=true on the companion,
+ * then poll GET /sync/pending every 2 s (for up to 35 s) waiting for the
+ * extension SW to call POST /sync/done. When done, reload All Tabs.
+ */
+async function triggerMachineSync() {
+  if (machineSyncPolling) return;
+  try { await apiPost('/sync', {}); } catch (e) {
+    showToast('Machine Sync failed: ' + e.message, true); return;
+  }
+  machineSyncPolling = true;
+  if (mtbMachineSyncBtn) {
+    mtbMachineSyncBtn.textContent = '⏳ Syncing…';
+    mtbMachineSyncBtn.classList.add('sync-pending');
+    mtbMachineSyncBtn.disabled = true;
+  }
+  machineSyncNotice?.classList.remove('hidden');
+
+  const startedAt = Date.now();
+  machineSyncPollTimer = setInterval(async () => {
+    try {
+      const data = await apiGet('/sync/pending');
+      if (!data.pending) { stopMachineSyncPoll(false); await loadMasterTabs(true); return; }
+    } catch { /* companion temporarily unreachable — keep trying */ }
+    if (Date.now() - startedAt > 35_000) stopMachineSyncPoll(true);
+  }, 2000);
+}
+
+/**
+ * stopMachineSyncPoll — clear poll timer and reset Machine Sync button UI.
+ * @param {boolean} timedOut - true if 35 s elapsed with no response
+ */
+function stopMachineSyncPoll(timedOut) {
+  if (machineSyncPollTimer) { clearInterval(machineSyncPollTimer); machineSyncPollTimer = null; }
+  machineSyncPolling = false;
+  if (mtbMachineSyncBtn) {
+    mtbMachineSyncBtn.textContent = timedOut ? '⚠ Timed out' : '☁ Machine Sync';
+    mtbMachineSyncBtn.classList.remove('sync-pending');
+    mtbMachineSyncBtn.disabled = false;
+    if (timedOut) {
+      mtbMachineSyncBtn.classList.add('sync-timeout');
+      setTimeout(() => {
+        if (mtbMachineSyncBtn) {
+          mtbMachineSyncBtn.textContent = '☁ Machine Sync';
+          mtbMachineSyncBtn.classList.remove('sync-timeout');
+        }
+      }, 3000);
+    }
+  }
+  machineSyncNotice?.classList.add('hidden');
 }
 
 /**
@@ -748,7 +850,7 @@ function wireLibContextMenu() {
           await apiDel(`/libraries/${lib.id}`);
           if (activeLibId === lib.id) { activeLibId = ''; showPanel('welcome'); }
           await loadLibraries();
-        } catch (e) { alert('Delete failed: ' + e.message); }
+        } catch (e) { showToast('Delete failed: ' + e.message, true); }
       }
     });
   });
@@ -852,6 +954,7 @@ function renderMasterTabsTable(tabs) {
       const col = th.dataset.col;
       if (masterTabSortCol === col) masterTabSortDir = masterTabSortDir === 'asc' ? 'desc' : 'asc';
       else { masterTabSortCol = col; masterTabSortDir = col === 'savedAt' ? 'desc' : 'asc'; }
+      masterTabsPage = 1; // reset to first page on sort change
       renderMasterTabsTable(tabs);
     });
   });
@@ -860,9 +963,11 @@ function renderMasterTabsTable(tabs) {
   masterTabList.innerHTML = '';
   masterTabList.appendChild(hdr);
 
-  // ── Rows ──
+  // ── Rows (paginated) ──
+  const totalSorted = sorted.length;
+  const displayed   = sorted.slice(0, masterTabsPage * PAGE_SIZE);
   const frag = document.createDocumentFragment();
-  sorted.forEach((tab, idx) => {
+  displayed.forEach((tab, idx) => {
     const colour  = tab.colour || 'none';
     const domain  = domainOf(tab.url);
     const repeats = repeatMap[tab.url] || 1;
@@ -920,7 +1025,7 @@ function renderMasterTabsTable(tabs) {
         try {
           await apiPatch(`/tabs/${tab.id}`, { notes: notesTA.value });
           tab.notes = notesTA.value;
-        } catch (e) { alert('Failed to save notes: ' + e.message); }
+        } catch (e) { showToast('Failed to save notes: ' + e.message, true); }
       });
     }
 
@@ -934,14 +1039,29 @@ function renderMasterTabsTable(tabs) {
       try {
         await apiDel(`/tabs/${tab.id}`);
         allMasterTabs = allMasterTabs.filter(t => t.id !== tab.id);
+        masterTabsCache = allMasterTabs; // keep cache in sync with local delete
         row.remove();
         const n = allMasterTabs.length;
         masterTabCount.textContent = `${n} tab${n !== 1 ? 's' : ''}`;
-      } catch (e) { alert('Delete failed: ' + e.message); }
+      } catch (e) { showToast('Delete failed: ' + e.message, true); }
     });
 
     frag.appendChild(row);
   });
+
+  // ── Load More row (if more pages exist) ──
+  if (displayed.length < totalSorted) {
+    const remaining = totalSorted - displayed.length;
+    const moreRow = document.createElement('div');
+    moreRow.className = 'tt-load-more';
+    moreRow.textContent = `⬇ Load more  (${remaining} more tab${remaining !== 1 ? 's' : ''})`;
+    moreRow.addEventListener('click', () => {
+      masterTabsPage++;
+      renderMasterTabsTable(tabs); // tabs = current filtered arg (captured in closure)
+    });
+    frag.appendChild(moreRow);
+  }
+
   masterTabList.appendChild(frag);
 }
 
@@ -1021,7 +1141,7 @@ newLibCreate.addEventListener('click', async () => {
     newLibModal.classList.add('hidden');
     await loadLibraries();
   } catch (e) {
-    alert('Failed to create library: ' + e.message);
+    showToast('Failed to create library: ' + e.message, true);
   } finally {
     newLibCreate.disabled = false;
   }
@@ -1336,8 +1456,27 @@ async function renderSettings() {
       <div class="settings-row"><span>Binary</span><span class="val">%LOCALAPPDATA%\\MindVault\\bin\\mvaultd.exe</span></div>
       <div class="settings-row"><span>Database</span><span class="val">%APPDATA%\\MindVault\\db.sqlite</span></div>
     </div>
+    <div class="settings-card" id="backupCard">
+      <h3>🗄️ Database Backup &amp; Restore</h3>
+      <div class="settings-row">
+        <span>Keep backups for</span>
+        <select id="backupRetain" style="font-size:12px;padding:2px 6px">
+          <option value="7">7 days</option>
+          <option value="15">15 days</option>
+          <option value="30">30 days</option>
+          <option value="90">90 days</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <span>Manual backup</span>
+        <button id="backupNowBtn" class="btn-primary" style="padding:4px 14px;font-size:12px">🗄 Backup Now</button>
+      </div>
+      <div id="backupStatus" class="backup-status"></div>
+      <div id="backupList" class="backup-list"><div class="loading-msg">Loading backups…</div></div>
+    </div>
   `;
   wireImportCard();
+  void wireBackupCard();
   // Wire theme switcher buttons
   const themeSwitcher = document.getElementById('themeSwitcher');
   if (themeSwitcher) {
@@ -1364,10 +1503,103 @@ async function renderSettings() {
         await renderSettings();
       } catch (e) {
         autostartBtn.disabled = false;
-        alert('Auto-start error: ' + e.message);
+        showToast('Auto-start error: ' + e.message, true);
       }
     });
   }
+}
+
+// ── Backup & Restore helpers ──────────────────────────────────────────────────
+
+/** Render a list of BackupInfo objects into #backupList. */
+function renderBackupRows(backups) {
+  const list = document.getElementById('backupList');
+  if (!list) return;
+  if (!backups || backups.length === 0) {
+    list.innerHTML = '<div class="backup-empty">No backups yet. Click "Backup Now" to create one.</div>';
+    return;
+  }
+  list.innerHTML = backups.map(b => {
+    const dt   = new Date(b.createdAt).toLocaleString();
+    const size = (b.sizeBytes / 1024 / 1024).toFixed(1) + ' MB';
+    return `<div class="backup-row">
+      <span class="backup-date" title="${esc(b.filename)}">${esc(dt)}</span>
+      <span class="backup-size">${esc(size)}</span>
+      <button class="btn-restore" data-file="${esc(b.filename)}">♻ Restore</button>
+      <button class="btn-del-backup" title="Delete this backup" data-file="${esc(b.filename)}">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+/** Wire up the Backup & Restore settings card after it is injected into DOM. */
+async function wireBackupCard() {
+  // Set saved retention
+  const retainSel = document.getElementById('backupRetain');
+  if (retainSel) {
+    const saved = localStorage.getItem('mv-backup-retain') || '30';
+    retainSel.value = saved;
+    retainSel.addEventListener('change', () =>
+      localStorage.setItem('mv-backup-retain', retainSel.value));
+  }
+  // Fetch and render backup list
+  try {
+    const backups = await apiGet('/backups');
+    renderBackupRows(backups || []);
+  } catch {
+    const list = document.getElementById('backupList');
+    if (list) list.innerHTML = '<div class="backup-empty">Could not load backups (daemon offline?).</div>';
+  }
+  // Wire Backup Now button
+  document.getElementById('backupNowBtn')?.addEventListener('click', doBackupNow);
+  // Wire restore / delete via event delegation on the list
+  document.getElementById('backupList')?.addEventListener('click', async e => {
+    const restoreBtn = e.target.closest('.btn-restore');
+    const delBtn     = e.target.closest('.btn-del-backup');
+    if (restoreBtn) await doRestore(restoreBtn.dataset.file);
+    if (delBtn)     await doDeleteBackup(delBtn.dataset.file);
+  });
+}
+
+/** Trigger an immediate backup and refresh the list. */
+async function doBackupNow() {
+  const btn    = document.getElementById('backupNowBtn');
+  const status = document.getElementById('backupStatus');
+  if (!btn) return;
+  btn.disabled = true; btn.textContent = '⏳ Backing up…';
+  if (status) status.textContent = '';
+  try {
+    const retain = localStorage.getItem('mv-backup-retain') || '30';
+    const info   = await apiPost(`/backup?retain=${retain}`, {});
+    if (status) status.textContent = `✅ Saved: ${info.filename || 'done'}`;
+    const backups = await apiGet('/backups');
+    renderBackupRows(backups || []);
+  } catch (e) {
+    if (status) status.textContent = '❌ Backup failed: ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = '🗄 Backup Now';
+}
+
+/** Restore a backup by filename — asks user to confirm, then reloads page. */
+async function doRestore(filename) {
+  if (!confirm(
+    `Restore database from backup:\n${filename}\n\n` +
+    `⚠️ ALL current data will be REPLACED with the backup.\n` +
+    `The page will reload automatically.`)) return;
+  try {
+    await apiPost(`/restore/${encodeURIComponent(filename)}`, {});
+    showToast('Restore complete. Reloading…');
+    setTimeout(() => location.reload(), 1500);
+  } catch (e) { showToast('Restore failed: ' + e.message, true); }
+}
+
+/** Permanently delete a backup file. */
+async function doDeleteBackup(filename) {
+  if (!confirm(`Delete backup?\n${filename}`)) return;
+  try {
+    await apiDel(`/backups/${encodeURIComponent(filename)}`);
+    const backups = await apiGet('/backups');
+    renderBackupRows(backups || []);
+  } catch (e) { showToast('Delete failed: ' + e.message, true); }
 }
 
 // ── Library entity nav (Sessions | Bookmarks | History | Downloads) ───────────

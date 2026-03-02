@@ -9,7 +9,6 @@
     "downloads",
     "history",
     "bookmarks",
-    "nativeMessaging",
     "*://*/*",
     "file:///*"
   ],

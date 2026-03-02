@@ -1,7 +1,7 @@
 # MindVault — Developer Environment Reference
 
-**Version:** 3.0  
-**Date:** 2026-02-24  
+**Version:** 3.1
+**Date:** 2026-03-03  
 
 ---
 

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go build ./cmd/mvaultd)",
+      "Bash(npx vite build)",
+      "Bash(go test ./...)",
+      "Bash(npx vitest run)",
+      "Bash(git add CHANGELOG.md companion/cmd/mvaultd/main.go companion/internal/api/handlers/handlers.go companion/internal/api/server.go companion/internal/api/ui/app.js companion/internal/api/ui/index.html companion/internal/api/ui/style.css companion/internal/api/ui/sw.js companion/internal/db/db_test.go companion/internal/db/migrate.go companion/internal/db/sqlite.go companion/internal/db/migrations/002_session_extras.sql docs/ARCHITECTURE.md docs/ENVIRONMENT.md docs/ISSUES.md docs/MASTER_FILE_INDEX.md docs/MASTER_FOLDER_INDEX.md docs/PLAN.md docs/SOLVED_ISSUES.md packages/extension/manifest-firefox.json packages/extension/manifest.json packages/extension/src/background/index.ts packages/extension/src/dashboard/dashboard.css packages/extension/src/dashboard/dashboard.html packages/extension/src/dashboard/index.ts packages/extension/src/db/repositories/sessions.ts packages/extension/src/popup/index.ts packages/extension/src/popup/popup.css packages/extension/src/popup/popup.html packages/extension/src/services/companion-client.ts packages/extension/src/services/export.ts packages/shared/src/types/entities.ts)",
+      "Bash(git commit:*)"
+    ]
+  }
+}

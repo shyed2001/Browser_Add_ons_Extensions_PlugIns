@@ -1,5 +1,50 @@
 # MindVault Changelog
 
+## [4.6.0] — 2026-03-02 — 15 Bug Fixes, Polish & Accessibility
+
+### Summary
+Bug fixes, UX polish, and accessibility improvements across extension popup, companion
+client, Go server, installer, and companion web UI. No new features — quality pass.
+
+### Extension Popup
+- **Companion status dot** (ISSUE-003 fix): green/gray indicator near header shows daemon status on open
+- **Clipboard API**: `navigator.clipboard.writeText()` replaces deprecated `document.execCommand('copy')`
+- **Save button loading**: shows "Saving…" while push runs, re-enables on complete
+- **ARIA labels**: all buttons annotated; status regions use `aria-live`
+- **Focus-visible**: keyboard focus outlines on all interactive elements
+
+### Companion Client (`companion-client.ts`)
+- **5s fetch timeout**: all HTTP calls use `AbortController` with 5s limit
+- **Token retry**: `fetchAndCacheToken()` retries twice with 1s delay
+- **Error logging**: `syncAllUnpushedSessions()` and `forceAllSync()` log warnings instead of swallowing errors silently
+
+### Background Service Worker
+- **Sync poll logging**: 30s polling catch block now logs `console.warn` instead of silent swallow
+
+### Go Server
+- **Auth content-type**: unauthorized response now sends proper JSON with `Content-Type: application/json`
+- **JSON encode logging**: `jsonOK`/`jsonErr` log encoding failures (client disconnect)
+
+### Installer (`install.ps1`)
+- **Auto-start ON by default**: `-AutoStart` flag defaults to `$true`
+- **Health check retry**: replaces single 2s sleep with 5-attempt retry loop (1s intervals)
+
+### Extension Manifests
+- **Removed `nativeMessaging` permission**: deferred until Phase 5 implementation
+
+### Companion Web UI
+- **Toast notifications**: all `alert()` calls replaced with non-blocking toast (CSS animation)
+- **Inline styles → CSS**: `#searchLibSel` styles moved to `.search-lib-select`; `style="display:none"` replaced with `.hidden` class
+- **Focus-visible**: keyboard focus outlines on sidebar, toolbar, and context menu buttons
+
+### Dashboard (Extension)
+- **`.hidden` utility class** added; inline `style="display:none"` replaced on toggle elements
+- **Focus-visible**: keyboard focus outlines on export, filter, and nav buttons
+
+### Tests: 27/27 Go · 116/116 TS · Chrome 41 modules
+
+---
+
 ## [4.4.0] — 2026-03-01 — ISSUE-011 Fix: IndexedDB → SQLite Auto-Sync
 
 ### Summary

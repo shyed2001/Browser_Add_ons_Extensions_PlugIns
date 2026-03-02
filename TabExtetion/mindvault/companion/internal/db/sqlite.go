@@ -5,9 +5,12 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite" // register "sqlite" driver
@@ -15,7 +18,15 @@ import (
 
 // DB wraps a sql.DB with MindVault-specific methods.
 type DB struct {
-	sql *sql.DB
+	sql  *sql.DB
+	path string // absolute path to the db file ("" for in-memory)
+}
+
+// BackupInfo describes a single database backup file.
+type BackupInfo struct {
+	Filename  string `json:"filename"`
+	CreatedAt int64  `json:"createdAt"` // Unix ms
+	SizeBytes int64  `json:"sizeBytes"`
 }
 
 // Library mirrors the IndexedDB library shape.
@@ -115,7 +126,7 @@ func Open(path string) (*DB, error) {
 		return nil, fmt.Errorf("open sqlite: %w", err)
 	}
 	sqlDB.SetMaxOpenConns(1) // SQLite WAL supports one writer
-	return &DB{sql: sqlDB}, nil
+	return &DB{sql: sqlDB, path: path}, nil
 }
 
 // OpenInMemory opens a transient in-memory database for testing.
@@ -131,6 +142,190 @@ func OpenInMemory() (*DB, error) {
 // Close closes the underlying database connection.
 func (d *DB) Close() error {
 	return d.sql.Close()
+}
+
+// ── Backup & Restore ──────────────────────────────────────────────────────────
+
+// BackupDir returns the directory where backup files are stored.
+// Backups live next to the main DB file: <dbDir>/backups/
+func (d *DB) BackupDir() string {
+	if d.path == "" {
+		return ""
+	}
+	return filepath.Join(filepath.Dir(d.path), "backups")
+}
+
+// Backup creates a timestamped copy of the database file in BackupDir(),
+// then removes backup files older than retainDays.
+// Returns the BackupInfo for the newly created file.
+func (d *DB) Backup(retainDays int) (BackupInfo, error) {
+	if d.path == "" {
+		return BackupInfo{}, fmt.Errorf("backup not supported for in-memory database")
+	}
+	if err := os.MkdirAll(d.BackupDir(), 0700); err != nil {
+		return BackupInfo{}, fmt.Errorf("create backup dir: %w", err)
+	}
+	// Flush WAL into the main file before copying.
+	if _, err := d.sql.Exec("PRAGMA wal_checkpoint(FULL)"); err != nil {
+		return BackupInfo{}, fmt.Errorf("wal checkpoint: %w", err)
+	}
+	filename := "mindvault-" + time.Now().UTC().Format("2006-01-02T15-04-05") + ".sqlite"
+	dest := filepath.Join(d.BackupDir(), filename)
+	if err := copyFile(d.path, dest); err != nil {
+		return BackupInfo{}, fmt.Errorf("copy db: %w", err)
+	}
+	fi, err := os.Stat(dest)
+	if err != nil {
+		return BackupInfo{}, fmt.Errorf("stat backup: %w", err)
+	}
+	// Clean up old backups (non-fatal).
+	_ = d.cleanOldBackups(retainDays)
+	return BackupInfo{
+		Filename:  filename,
+		CreatedAt: fi.ModTime().UnixMilli(),
+		SizeBytes: fi.Size(),
+	}, nil
+}
+
+// AutoBackup takes a daily backup on daemon startup: if a backup whose filename
+// starts with today's date (UTC) already exists, it is a no-op.
+func (d *DB) AutoBackup(defaultRetain int) error {
+	if d.path == "" {
+		return nil
+	}
+	today := time.Now().UTC().Format("2006-01-02")
+	entries, _ := os.ReadDir(d.BackupDir()) // ok if dir doesn't exist yet
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), "mindvault-"+today) && strings.HasSuffix(e.Name(), ".sqlite") {
+			return nil // already backed up today
+		}
+	}
+	_, err := d.Backup(defaultRetain)
+	return err
+}
+
+// ListBackups returns all backup files, sorted newest-first.
+func (d *DB) ListBackups() ([]BackupInfo, error) {
+	if d.path == "" {
+		return nil, nil
+	}
+	entries, err := os.ReadDir(d.BackupDir())
+	if os.IsNotExist(err) {
+		return []BackupInfo{}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read backup dir: %w", err)
+	}
+	var infos []BackupInfo
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".sqlite") {
+			continue
+		}
+		fi, err := e.Info()
+		if err != nil {
+			continue
+		}
+		infos = append(infos, BackupInfo{
+			Filename:  e.Name(),
+			CreatedAt: fi.ModTime().UnixMilli(),
+			SizeBytes: fi.Size(),
+		})
+	}
+	sort.Slice(infos, func(i, j int) bool {
+		return infos[i].CreatedAt > infos[j].CreatedAt // newest first
+	})
+	return infos, nil
+}
+
+// Restore replaces the live database file with the named backup file,
+// then reopens the connection in-place. The HTTP server keeps running.
+func (d *DB) Restore(filename string) error {
+	if d.path == "" {
+		return fmt.Errorf("restore not supported for in-memory database")
+	}
+	// Security: reject any path traversal attempt.
+	if filepath.Base(filename) != filename || !strings.HasSuffix(filename, ".sqlite") {
+		return fmt.Errorf("invalid backup filename")
+	}
+	src := filepath.Join(d.BackupDir(), filename)
+	if _, err := os.Stat(src); err != nil {
+		return fmt.Errorf("backup not found: %w", err)
+	}
+	// Flush WAL before closing.
+	_, _ = d.sql.Exec("PRAGMA wal_checkpoint(FULL)")
+	if err := d.sql.Close(); err != nil {
+		return fmt.Errorf("close db: %w", err)
+	}
+	if err := copyFile(src, d.path); err != nil {
+		// Best-effort reopen even if copy failed.
+		sqlDB, _ := sql.Open("sqlite", d.path+"?_journal_mode=WAL&_foreign_keys=on")
+		if sqlDB != nil {
+			sqlDB.SetMaxOpenConns(1)
+			d.sql = sqlDB
+		}
+		return fmt.Errorf("copy backup: %w", err)
+	}
+	sqlDB, err := sql.Open("sqlite", d.path+"?_journal_mode=WAL&_foreign_keys=on")
+	if err != nil {
+		return fmt.Errorf("reopen db: %w", err)
+	}
+	sqlDB.SetMaxOpenConns(1)
+	d.sql = sqlDB
+	return nil
+}
+
+// DeleteBackup removes a backup file by name.
+func (d *DB) DeleteBackup(filename string) error {
+	if filepath.Base(filename) != filename || !strings.HasSuffix(filename, ".sqlite") {
+		return fmt.Errorf("invalid backup filename")
+	}
+	return os.Remove(filepath.Join(d.BackupDir(), filename))
+}
+
+// copyFile copies src to dst atomically (write to temp, then rename).
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	tmp := dst + ".tmp"
+	out, err := os.Create(tmp)
+	if err != nil {
+		return err
+	}
+	if _, err = io.Copy(out, in); err != nil {
+		out.Close()
+		os.Remove(tmp)
+		return err
+	}
+	if err = out.Close(); err != nil {
+		os.Remove(tmp)
+		return err
+	}
+	return os.Rename(tmp, dst)
+}
+
+// cleanOldBackups deletes backup files older than retainDays days.
+func (d *DB) cleanOldBackups(retainDays int) error {
+	cutoff := time.Now().UTC().AddDate(0, 0, -retainDays)
+	entries, err := os.ReadDir(d.BackupDir())
+	if err != nil {
+		return err
+	}
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".sqlite") {
+			continue
+		}
+		fi, err := e.Info()
+		if err != nil {
+			continue
+		}
+		if fi.ModTime().Before(cutoff) {
+			_ = os.Remove(filepath.Join(d.BackupDir(), e.Name()))
+		}
+	}
+	return nil
 }
 
 // CreateLibrary inserts a new library record.
@@ -427,14 +622,20 @@ func (d *DB) MigrateDefaultLibraryNames() error {
 }
 
 // MigrateDefaultLibraryNamesAs is the testable core of MigrateDefaultLibraryNames.
-// For every library still named "Default Library":
+// For every library still named "Default Library" OR "Default (username)" (no browser yet):
 //   - If dominant source_browser found in its sessions → "Default (Chrome — username)"
 //   - Otherwise (no sessions or all have empty browser) → "Default (username)"
 //
 // @param username  OS login name injected by caller (OsUsername() in production).
 func (d *DB) MigrateDefaultLibraryNamesAs(username string) error {
-	// Step 1: find all libraries still using the generic default name
-	rows, err := d.sql.Query(`SELECT id FROM libraries WHERE name = 'Default Library'`)
+	// Step 1: find all libraries still using the generic default name OR the
+	// username-only variant (e.g. "Default (Dell Vostro)") that haven't had a
+	// browser added yet (i.e. name does not already contain " — ").
+	defaultNoBS := "Default (" + username + ")"
+	rows, err := d.sql.Query(
+		`SELECT id FROM libraries WHERE name = 'Default Library' OR name = ?`,
+		defaultNoBS,
+	)
 	if err != nil {
 		return err
 	}

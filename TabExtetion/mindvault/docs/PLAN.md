@@ -1,8 +1,8 @@
 # MindVault — Development Plan
 
-**Product:** Personal Knowledge Vault — "CRM for your own attention"  
-**Current Phase:** Phase 3 — Desktop App + Import Platform  
-**Last Updated:** 2026-02-24
+**Product:** Personal Knowledge Vault — "CRM for your own attention"
+**Current Phase:** Phase 4 — Cloud PWA + Mobile
+**Last Updated:** 2026-03-03
 
 ---
 
@@ -56,7 +56,7 @@ Transform a simple Chrome tab-saver (v1.1, vanilla JS, ~300 LOC) into a full-sta
 
 ---
 
-### 🔄 Phase 3 — Companion Web UI + Full Browser Support (Days 71–105)
+### ✅ Phase 3 — Companion Web UI + Full Browser Support — COMPLETE (v4.0.0 → v4.5.2)
 
 > **Revised 2026-02-25**: MAUI desktop app replaced by a built-in web dashboard served
 > directly by the companion EXE at `http://127.0.0.1:47821/ui`. Single-binary, no extra
@@ -97,21 +97,33 @@ Companion EXE (127.0.0.1:47821)
 | 12 | Save checkpoint-phase3-complete.md + tag v4.0.0 | ✅ |
 
 **Test counts:** 143 passing (116 TS + 27 Go), 40 Chrome modules, 41 Firefox modules
-**Last updated:** 2026-02-26
+**Last updated:** 2026-03-02
+
+### v4.x Post-Phase-3 Releases
+
+| Version | Date       | Description |
+|---------|------------|-------------|
+| v4.4.0  | 2026-03-01 | ISSUE-011 fix: IndexedDB → SQLite auto-sync on every SW startup; `INSERT OR IGNORE` makes pushes idempotent; `syncedToCompanion` flag on Session |
+| v4.4.1  | 2026-03-02 | `COL_DEFAULTS.title` fix (vertical text bug); `MigrateDefaultLibraryNamesAs` extended to also match "Default (username)" |
+| v4.5.0  | 2026-03-02 | Machine Sync buttons in Extension Dashboard + Companion All Tabs; `forceAllSync()` / `checkSyncPending()` / `notifySyncDone()`; 30s SW polling; custom-library ensure bug fix |
+| v4.5.1  | 2026-03-02 | Companion All Tabs performance: 200-row pagination + "⬇ Load more"; 30s client-side data cache; 250ms search debounce |
+| v4.5.2  | 2026-03-02 | DB Backup & Restore: auto-daily backup on startup; Settings card with retention 7/15/30/90 days; Backup Now button; restore in-place (DB closed → file copy → reopen) |
+| v4.6.0  | 2026-03-03 | **15 bug fixes + UI polish**: Companion status dot in popup; Fetch timeouts + retry logic; Toast notifications (replace alert); Loading states; .hidden class for UI toggles; ARIA labels + :focus-visible; Clipboard API migration; JSON error logging; installer auto-start + health check retry; removed nativeMessaging permission (Phase 5) |
 
 ---
 
-### ⏳ Phase 4 — Web App (PWA) + Cloud Sync + Mobile (Days 106–180)
+### ⏳ Phase 4 — Cloud PWA + Mobile (Days 106–180)
 
 > Vanilla TS/Node.js **Progressive Web App** — installable, offline-capable, syncs to cloud.
 
-**Key architectural decision: Web app = PWA (Progressive Web App)**
-- Service Worker for offline caching + background sync
-- Web App Manifest (`manifest.webmanifest`) for install prompt
-- Installable on Windows, Mac, Linux, Android, iOS from the browser
-- Cache-first strategy for UI assets, network-first for API data
-- Push notifications for sync status (optional)
+**Key architectural decisions (confirmed 2026-03-02):**
+- **Extension**: keeps IndexedDB — offline-first, browser sandbox, unchanged
+- **Companion**: keeps SQLiteDB — local central store + offline fallback for cloud
+- **PWA client**: `wa-sqlite` / OPFS for true offline cache (not plain IndexedDB)
+- **Cloud server**: PostgreSQL + Redis for sync; Node.js/TS API
+- **Mobile**: .NET MAUI (iOS + Android) with SQLite local DB + cloud sync
 - No React — vanilla TS + HTML templates (consistent with extension)
+- Service Worker for offline caching; Web App Manifest for install prompt
 
 | Step | Description | Status |
 |------|-------------|--------|

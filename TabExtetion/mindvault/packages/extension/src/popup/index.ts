@@ -14,6 +14,7 @@ import { MIGRATION_FLAG_KEY, type MigrationRecord } from '@mindvault/shared';
 import { pushSession, pushTabs } from '../services/companion-client';
 
 const LAST_LIBRARY_KEY = 'mv_last_library_id';
+const COMPANION_URL   = 'http://127.0.0.1:47821';
 
 // ---- DOM refs ----------------------------------------------
 const tabListEl       = document.getElementById('tabList')        as HTMLUListElement;
@@ -30,6 +31,7 @@ const librarySelect   = document.getElementById('librarySelect')  as HTMLSelectE
 const migrationBanner = document.getElementById('migrationBanner') as HTMLDivElement;
 const migrationMsgEl  = document.getElementById('migrationMsg')   as HTMLSpanElement;
 const migrationDismiss = document.getElementById('migrationDismiss') as HTMLButtonElement;
+const companionDot    = document.getElementById('companionStatus') as HTMLSpanElement;
 
 // ---- Init --------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
@@ -44,6 +46,9 @@ async function init(): Promise<void> {
     showError(`DB init failed: ${String(err)}`);
   }
 
+  // Check companion daemon status (non-blocking)
+  void checkCompanionStatus();
+
   // Check if this is first launch after migration and show banner
   void checkMigrationBanner();
 
@@ -54,7 +59,7 @@ async function init(): Promise<void> {
   void loadCurrentTabs();
 
   // Wire up events
-  copyBtn.addEventListener('click', handleCopy);
+  copyBtn.addEventListener('click', () => void handleCopy());
   saveBtn.addEventListener('click', () => void handleSave());
   dashBtn.addEventListener('click', () => { void browser.runtime.openOptionsPage(); });
   storageLink.addEventListener('click', (e) => {
@@ -130,26 +135,30 @@ async function loadCurrentTabs(): Promise<void> {
 
 // ---- Copy to clipboard -------------------------------------
 
-function handleCopy(): void {
-  tabTextareaEl.select();
+async function handleCopy(): Promise<void> {
+  const text = tabTextareaEl.value;
   try {
-    document.execCommand('copy');
-    copyBtn.textContent = 'Copied!';
-    copyStatus.style.display = 'block';
-    setTimeout(() => {
-      copyBtn.textContent = 'Copy to Clipboard';
-      copyStatus.style.display = 'none';
-    }, 2000);
+    // Modern Clipboard API (preferred)
+    await navigator.clipboard.writeText(text);
   } catch {
-    copyBtn.textContent = 'Error Copying';
+    // Fallback for older browsers / restricted contexts
+    tabTextareaEl.select();
+    document.execCommand('copy');
+    window.getSelection()?.removeAllRanges();
   }
-  window.getSelection()?.removeAllRanges();
+  copyBtn.textContent = 'Copied!';
+  copyStatus.style.display = 'block';
+  setTimeout(() => {
+    copyBtn.textContent = 'Copy to Clipboard';
+    copyStatus.style.display = 'none';
+  }, 2000);
 }
 
 // ---- Save tabs to DB ---------------------------------------
 
 async function handleSave(): Promise<void> {
   saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving…';
   hideMessages();
 
   try {
@@ -224,6 +233,7 @@ async function handleSave(): Promise<void> {
     showError(`Save failed: ${String(err)}`);
   } finally {
     saveBtn.disabled = false;
+    saveBtn.textContent = 'Save Current Tabs';
   }
 }
 
@@ -236,8 +246,8 @@ async function checkMigrationBanner(): Promise<void> {
     const dismissed = result['migration_banner_dismissed'] as boolean | undefined;
     if (flag && !dismissed) {
       migrationMsgEl.textContent =
-        `✅ ${flag.recordCount} tabs migrated from v1.1 to MindVault v2!`;
-      migrationBanner.style.display = 'flex';
+        `${flag.recordCount} tabs migrated from v1.1 to MindVault v2!`;
+      migrationBanner.classList.remove('hidden');
     }
   } catch {
     // Silent fail — banner is non-critical
@@ -245,8 +255,34 @@ async function checkMigrationBanner(): Promise<void> {
 }
 
 function dismissMigrationBanner(): void {
-  migrationBanner.style.display = 'none';
+  migrationBanner.classList.add('hidden');
   void browser.storage.local.set({ migration_banner_dismissed: true });
+}
+
+// ---- Companion status check --------------------------------
+
+/** Ping companion /health endpoint; update status dot. Non-blocking, fire-and-forget. */
+async function checkCompanionStatus(): Promise<void> {
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 2000); // 2s timeout — popup is short-lived
+    const res = await fetch(`${COMPANION_URL}/health`, { signal: ctrl.signal });
+    if (res.ok) {
+      companionDot.classList.add('online');
+      companionDot.classList.remove('offline');
+      companionDot.title = 'Companion: online — tabs sync to local vault';
+    } else {
+      setCompanionOffline();
+    }
+  } catch {
+    setCompanionOffline();
+  }
+}
+
+function setCompanionOffline(): void {
+  companionDot.classList.add('offline');
+  companionDot.classList.remove('online');
+  companionDot.title = 'Companion: offline — saving locally only';
 }
 
 // ---- Helpers -----------------------------------------------

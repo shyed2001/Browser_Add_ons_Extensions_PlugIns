@@ -1,0 +1,30 @@
+{
+  "name": "mindvault",
+  "version": "0.0.0",
+  "private": true,
+  "description": "MindVault — Personal knowledge vault monorepo",
+  "scripts": {
+    "build": "pnpm --filter @mindvault/extension build",
+    "build:all": "pnpm --filter @mindvault/extension build",
+    "dev": "pnpm --filter @mindvault/extension dev",
+    "lint": "eslint packages/*/src --ext .ts,.tsx --max-warnings 0",
+    "lint:fix": "eslint packages/*/src --ext .ts,.tsx --fix",
+    "format": "prettier --write \"packages/*/src/**/*.{ts,tsx,html,css,json}\"",
+    "format:check": "prettier --check \"packages/*/src/**/*.{ts,tsx,html,css,json}\"",
+    "typecheck": "pnpm --recursive --filter @mindvault/* typecheck",
+    "test": "pnpm --recursive --filter @mindvault/* test",
+    "test:coverage": "pnpm --recursive --filter @mindvault/* test:coverage",
+    "clean": "pnpm --recursive --filter @mindvault/* clean"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

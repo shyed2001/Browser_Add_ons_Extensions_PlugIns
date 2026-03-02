@@ -207,11 +207,11 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font: 14px
 /* Columns: # | colour | title+url | domain | session | library | browser | saved  */
 /*          | repeats | notes | actions                                             */
 :root {
-  --col-num: 32px; --col-colour: 16px; --col-title: 1fr;   --col-domain:  110px;
+  --col-num: 32px; --col-colour: 16px; --col-title: minmax(160px, 1fr); --col-domain: 110px;
   --col-session: 120px; --col-library: 100px; --col-browser: 80px; --col-saved: 76px;
   --col-repeats: 64px;  --col-notes: 140px;  --col-actions: 76px;
 }
-.tab-table-wrap { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.tab-table-wrap { flex: 1; overflow-y: auto; overflow-x: auto; display: flex; flex-direction: column; }
 .tab-table-hdr, .tab-table-row {
   display: grid;
   grid-template-columns:
@@ -220,7 +220,10 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font: 14px
     var(--col-repeats) var(--col-notes) var(--col-actions);
   align-items: start; /* start = rows expand vertically when text wraps */
   gap: 0 4px; padding: 4px 8px; min-width: 0;
+  width: 100%; box-sizing: border-box;
 }
+/* Prevent any grid cell from inflating its track beyond allocated width */
+.tab-table-hdr > *, .tab-table-row > * { min-width: 0; }
 .tab-table-hdr {
   font-size: 11px; color: var(--muted); font-weight: 600;
   padding-top: 6px; padding-bottom: 6px;
@@ -232,6 +235,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font: 14px
 .tab-table-hdr .tth {
   cursor: pointer; user-select: none; position: relative;
   display: flex; align-items: center; padding-right: 8px;
+  overflow: visible; /* allow resize handle to extend beyond cell boundary */
 }
 .tab-table-hdr .tth:hover { color: var(--text); }
 .tab-table-hdr .tth.sorted { color: var(--accent); }
@@ -246,8 +250,10 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font: 14px
 .tt-title-info { flex: 1; min-width: 0; }
 
 /* Text wrap — rows expand to show full content (user preference: Expand rows) */
-.tt-title-text { font-size: 13px; white-space: normal; word-break: break-word; line-height: 1.3; }
-.tt-url-text   { font-size: 10px; color: var(--muted); white-space: normal; word-break: break-all; }
+/* overflow-wrap wraps only at word/character boundaries as needed; word-break:normal prevents
+   char-by-char splitting which caused CSS grid 1fr tracks to collapse to ~8px width */
+.tt-title-text { font-size: 13px; white-space: normal; word-break: normal; overflow-wrap: break-word; line-height: 1.35; }
+.tt-url-text   { font-size: 10px; color: var(--muted); white-space: normal; word-break: normal; overflow-wrap: anywhere; }
 .tt-url-text a { color: var(--accent); text-decoration: none; }
 .tt-url-text a:hover { color: var(--accent-hover); text-decoration: underline; }
 
@@ -282,6 +288,56 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font: 14px
 }
 .btn-mtb:hover { border-color: var(--accent); color: var(--text); }
 .btn-col-toggle { margin-left: auto; }
+
+/* ── Machine Sync button (companion All Tabs toolbar) ── */
+.btn-machine-sync-comp {
+  border-color: var(--green); color: var(--green);
+  font-weight: 600; margin-left: 4px;
+}
+.btn-machine-sync-comp:hover {
+  border-color: var(--green); background: var(--green); color: #fff;
+}
+.btn-machine-sync-comp:disabled { opacity: .6; cursor: not-allowed; }
+.btn-machine-sync-comp.sync-pending {
+  border-color: var(--yellow); color: var(--yellow);
+  animation: mv-sync-pulse 1s ease-in-out infinite;
+}
+.btn-machine-sync-comp.sync-timeout { border-color: var(--red); color: var(--red); }
+@keyframes mv-sync-pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── Machine Sync status notice ── */
+.machine-sync-notice {
+  background: rgba(80,144,224,.10); border: 1px solid var(--blue);
+  border-radius: 6px; padding: 6px 12px; margin: 4px 8px;
+  font-size: 11px; color: var(--blue); line-height: 1.4; flex-shrink: 0;
+}
+.machine-sync-notice.hidden { display: none; }
+
+/* ── All Tabs: Load More row ── */
+.tt-load-more {
+  grid-column: 1 / -1; text-align: center; padding: 10px 0;
+  color: var(--accent); cursor: pointer; font-size: 12px;
+  border-top: 1px solid var(--border); margin-top: 2px;
+  user-select: none;
+}
+.tt-load-more:hover { background: var(--bg2); border-radius: 0 0 6px 6px; }
+
+/* ── Backup & Restore settings card ── */
+.backup-list        { margin-top: 8px; }
+.backup-row         { display: flex; align-items: center; gap: 8px; padding: 5px 0;
+                      border-bottom: 1px solid var(--border); font-size: 12px; }
+.backup-row:last-child { border-bottom: none; }
+.backup-row .backup-date { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.backup-row .backup-size { color: var(--muted); min-width: 54px; text-align: right; flex-shrink: 0; }
+.btn-restore        { font-size: 11px; padding: 2px 8px; border: 1px solid var(--accent);
+                      color: var(--accent); background: none; border-radius: 4px; cursor: pointer;
+                      flex-shrink: 0; white-space: nowrap; }
+.btn-restore:hover  { background: var(--accent); color: var(--bg); }
+.btn-del-backup     { font-size: 14px; background: none; border: none; flex-shrink: 0;
+                      color: var(--danger, #e55); cursor: pointer; padding: 0 3px; line-height: 1; }
+.btn-del-backup:hover { opacity: 0.7; }
+.backup-empty       { color: var(--muted); padding: 8px 0; font-size: 12px; }
+.backup-status      { font-size: 12px; min-height: 18px; margin-top: 4px; }
 
 /* ── Column visibility dropdown ── */
 .col-vis-menu {
@@ -462,6 +518,50 @@ code { background: var(--bg3); padding: 1px 5px; border-radius: 4px; font-size: 
   color: var(--text); border-radius: 4px; padding: 1px 5px; font-size: 13px;
   min-width: 0; outline: none;
 }
+
+/* ── Search library select (moved from inline styles) ── */
+.search-lib-label { font-size: 12px; }
+.search-lib-select {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+/* ── Keyboard focus outlines (a11y) ── */
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-icon:focus-visible,
+.btn-mtb:focus-visible,
+.snav-btn:focus-visible,
+.lnav-btn:focus-visible,
+.ctx-item:focus-visible,
+.lib-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Toast notification ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 13px;
+  z-index: 9999;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .25s, transform .25s;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error { border-color: #d32f2f; color: #ff5252; }
 
 /* ── Responsive ── */
 @media (max-width: 600px) {

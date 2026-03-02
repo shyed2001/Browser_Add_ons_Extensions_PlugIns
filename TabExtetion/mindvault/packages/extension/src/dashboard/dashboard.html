@@ -12,9 +12,15 @@
     <!-- Header -->
     <div class="page-header">
       <h1>MindVault <span class="page-subtitle">Dashboard</span></h1>
-      <div class="library-switcher">
-        <select id="librarySelect" class="library-select" aria-label="Active library"></select>
-        <button id="newLibraryBtn" class="btn-new-library" title="Create new library">+ Library</button>
+      <div class="header-actions">
+        <button id="machineSyncBtn" class="btn-machine-sync"
+                title="Force-push all sessions from this browser to companion SQLite">
+          ☁ Machine Sync
+        </button>
+        <div class="library-switcher">
+          <select id="librarySelect" class="library-select" aria-label="Active library"></select>
+          <button id="newLibraryBtn" class="btn-new-library" title="Create new library">+ Library</button>
+        </div>
       </div>
     </div>
 
@@ -87,7 +93,7 @@
           </thead>
           <tbody id="tableBody"></tbody>
         </table>
-        <div id="tabsEmpty" class="empty-state" style="display:none;">
+        <div id="tabsEmpty" class="empty-state hidden">
           No tabs saved yet.
         </div>
       </div>
@@ -130,7 +136,7 @@
           </thead>
           <tbody id="historyTableBody"></tbody>
         </table>
-        <div id="historyEmpty" class="empty-state" style="display:none;">
+        <div id="historyEmpty" class="empty-state hidden">
           No history entries yet. Browse some pages to capture history!
         </div>
       </div>
@@ -162,7 +168,7 @@
           </thead>
           <tbody id="downloadsTableBody"></tbody>
         </table>
-        <div id="downloadsEmpty" class="empty-state" style="display:none;">
+        <div id="downloadsEmpty" class="empty-state hidden">
           No downloads recorded yet.
         </div>
       </div>
@@ -246,7 +252,7 @@
     <button class="s-ctx-item" data-action="rename">✏️ Rename</button>
     <div class="s-ctx-divider"></div>
     <button class="s-ctx-item s-ctx-archive-btn" data-action="archive">🗃️ Archive</button>
-    <button class="s-ctx-item s-ctx-restore-btn" data-action="restore" style="display:none">📤 Restore</button>
+    <button class="s-ctx-item s-ctx-restore-btn hidden" data-action="restore">📤 Restore</button>
     <div class="s-ctx-divider"></div>
     <button class="s-ctx-item s-ctx-danger" data-action="delete">🗑️ Remove session (keep tabs)</button>
     <button class="s-ctx-item s-ctx-danger" data-action="delete-tabs">💥 Delete session + all tabs</button>

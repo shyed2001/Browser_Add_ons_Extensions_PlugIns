@@ -76,8 +76,16 @@ func NewRouter(database *db.DB, token string) http.Handler {
 	// Search (libId optional — empty = all libraries)
 	mux.Handle("GET /search", protected(http.HandlerFunc(h.Search)))
 
-	// Sync (receive bulk data from extension)
-	mux.Handle("POST /sync", protected(http.HandlerFunc(h.Sync)))
+	// Machine Sync — in-memory pending state (no DB required)
+	mux.Handle("POST /sync",        protected(http.HandlerFunc(h.Sync)))
+	mux.Handle("GET /sync/pending", protected(http.HandlerFunc(h.GetSyncPending)))
+	mux.Handle("POST /sync/done",   protected(http.HandlerFunc(h.SyncDone)))
+
+	// Database Backup & Restore
+	mux.Handle("POST /backup",               protected(http.HandlerFunc(h.CreateBackup)))
+	mux.Handle("GET /backups",               protected(http.HandlerFunc(h.ListBackups)))
+	mux.Handle("POST /restore/{filename}",   protected(http.HandlerFunc(h.RestoreBackup)))
+	mux.Handle("DELETE /backups/{filename}", protected(http.HandlerFunc(h.DeleteBackup)))
 
 	// Companion web dashboard UI (embedded static files)
 	// noCacheUI ensures browsers always revalidate UI assets after a binary update.
@@ -122,7 +130,9 @@ func authMiddleware(token string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Header.Get("X-MindVault-Token") != token {
-				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				_, _ = w.Write([]byte(`{"error":"unauthorized"}`))
 				return
 			}
 			next.ServeHTTP(w, r)

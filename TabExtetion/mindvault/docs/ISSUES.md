@@ -1,5 +1,5 @@
 # MindVault — Known Open Issues
-_Last updated: 2026-03-01 (v4.4.0)_
+_Last updated: 2026-03-02 (v4.6.0)_
 
 ---
 
@@ -18,7 +18,7 @@ _Last updated: 2026-03-01 (v4.4.0)_
 ---
 
 ## [ISSUE-001] Companion daemon not auto-started on Windows login
-**Status:** Open
+**Status:** ✅ FIXED — v4.6.0 (2026-03-02) — `-AutoStart` defaults to `$true` in installer
 **Severity:** Medium — user must manually start daemon after reboot
 **Description:** The companion installer registers native messaging for Chrome/Edge/Brave/
 Opera/Vivaldi but does NOT set up a Task Scheduler job. After a system reboot, `mvaultd.exe`
@@ -43,7 +43,7 @@ extension ID before production distribution.
 ---
 
 ## [ISSUE-003] Extension popup — no visual feedback when companion not running
-**Status:** Open
+**Status:** ✅ FIXED — v4.6.0 (2026-03-02) — green/gray status dot added to popup header
 **Severity:** Low — UX issue
 **Description:** If the companion daemon is not running, the popup silently fails to
 show libraries/sessions synced via the companion. There is no "companion offline" indicator.

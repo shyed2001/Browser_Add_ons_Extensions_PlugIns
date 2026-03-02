@@ -1,5 +1,8 @@
 /* MindVault Dashboard — extends v1.1 style */
 
+/* Utility */
+.hidden { display: none !important; }
+
 /* ---- RGYB repeat indicator classes (preserved from v1.1 exactly) ---- */
 .star-red  { color: #d32f2f; }
 .star-gold { color: #fbc02d; }
@@ -56,6 +59,36 @@ h1 {
   border-radius: 20px;
   margin-bottom: 15px;
 }
+
+/* ---- Header actions (library switcher + Machine Sync button) ---- */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+/* ---- Machine Sync button ---- */
+.btn-machine-sync {
+  padding: 5px 12px;
+  border: 1px solid #28a745;
+  border-radius: 4px;
+  background: transparent;
+  color: #28a745;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.btn-machine-sync:hover   { background: #28a745; color: #fff; }
+.btn-machine-sync:disabled { opacity: 0.7; cursor: not-allowed; }
+.btn-machine-sync.syncing {
+  border-color: #fd7e14; color: #fd7e14;
+  animation: mv-sync-pulse 1s ease-in-out infinite;
+}
+.btn-machine-sync.sync-error { border-color: #dc3545; color: #dc3545; }
+@keyframes mv-sync-pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
 /* ---- Nav tabs ---- */
 .nav-tabs {
@@ -662,3 +695,16 @@ td.col-url {
 }
 
 td.col-url a { color: #007bff; }
+
+/* Keyboard focus outlines (a11y) */
+.btn-export:focus-visible,
+.btn-primary-sm:focus-visible,
+.btn-secondary-sm:focus-visible,
+.btn-danger-sm:focus-visible,
+.btn-machine-sync:focus-visible,
+.btn-new-library:focus-visible,
+.nav-tab:focus-visible,
+.btn-filter:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}

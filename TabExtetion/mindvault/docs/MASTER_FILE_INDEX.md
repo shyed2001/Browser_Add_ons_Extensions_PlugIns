@@ -18,7 +18,7 @@
 # MindVault — Master File Index
 
 > **DRY rule**: This file lists files. Content lives in each file itself.
-> **Last updated**: 2026-03-01 (v4.4.0)
+> **Last updated**: 2026-03-03 (v4.6.0)
 
 ---
 
@@ -117,4 +117,5 @@
 | packages/extension/manifest.json | MV3 manifest (Chrome) |
 | packages/extension/manifest-firefox.json | MV2 manifest (Firefox) |
 | companion/go.mod | Go module + deps |
-| tools/install-companion/install-windows.ps1 | Windows installer |
+| companion/internal/db/migrations/002_session_extras.sql | Session table v4.6.0+ columns (syncedToCompanion) |
+| tools/install-companion/install-windows.ps1 | Windows installer (v4.6.0: auto-start + retry) |

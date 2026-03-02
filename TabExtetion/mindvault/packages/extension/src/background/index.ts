@@ -8,7 +8,13 @@ import { getDefaultLibrary } from '../db/repositories/libraries';
 import { initHistoryCapture } from './history-capture';
 import { initDownloadCapture } from './download-capture';
 import { initBookmarkSync } from './bookmark-sync';
-import { bootstrapCompanion, syncAllUnpushedSessions } from '../services/companion-client';
+import {
+  bootstrapCompanion,
+  syncAllUnpushedSessions,
+  checkSyncPending,
+  forceAllSync,
+  notifySyncDone,
+} from '../services/companion-client';
 
 // ---- Startup -----------------------------------------------
 
@@ -54,3 +60,19 @@ chrome.runtime.onStartup.addListener(() => {
 
 // Trigger immediately when service worker first activates
 void onStartup();
+
+// ── Machine Sync Polling ─────────────────────────────────────────────────────
+// Every 30 s: check if companion has a pending Machine Sync request.
+// If yes: force-push ALL IDB sessions to companion, then notify done.
+// Re-registered each time the SW activates (MV3 interval is not persistent).
+setInterval(() => {
+  void (async () => {
+    try {
+      if (!(await checkSyncPending())) return;
+      await forceAllSync();
+      await notifySyncDone();
+    } catch (e) {
+      console.warn('[MindVault] sync poll error:', e);
+    }
+  })();
+}, 30_000);

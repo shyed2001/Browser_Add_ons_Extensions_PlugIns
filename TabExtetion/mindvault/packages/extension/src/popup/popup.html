@@ -9,11 +9,14 @@
 <body>
   <div class="header">
     <h3>MindVault</h3>
-    <span class="version">v2</span>
+    <div class="header-right">
+      <span id="companionStatus" class="companion-dot" title="Companion: checking…" aria-label="Companion status"></span>
+      <span class="version">v2</span>
+    </div>
   </div>
 
   <!-- Migration banner (shown once after v1→v2 migration) -->
-  <div id="migrationBanner" class="migration-banner" style="display:none;">
+  <div id="migrationBanner" class="migration-banner hidden">
     <span id="migrationMsg"></span>
     <button id="migrationDismiss" class="btn-dismiss">✕</button>
   </div>
@@ -22,7 +25,7 @@
   <div class="section-label">Currently Open Tabs:</div>
   <ul id="tabList" class="tab-list"></ul>
   <textarea id="tabListText" class="tab-textarea" readonly></textarea>
-  <button id="copyButton" class="btn-copy">Copy to Clipboard</button>
+  <button id="copyButton" class="btn-copy" aria-label="Copy tab list to clipboard">Copy to Clipboard</button>
   <div id="copyStatus" class="copy-status">Copied!</div>
 
   <hr class="divider">
@@ -47,11 +50,11 @@
   </div>
 
   <!-- Save button -->
-  <button id="saveAllBtn" class="btn-primary">Save Current Tabs</button>
-  <div id="statusMsg" class="status-msg">✅ Saved!</div>
-  <div id="errorMsg" class="error-msg"></div>
+  <button id="saveAllBtn" class="btn-primary" aria-label="Save all open tabs to selected library">Save Current Tabs</button>
+  <div id="statusMsg" class="status-msg" aria-live="polite">Saved!</div>
+  <div id="errorMsg" class="error-msg" aria-live="assertive"></div>
 
-  <button id="openDashboard" class="btn-secondary">Open Dashboard</button>
+  <button id="openDashboard" class="btn-secondary" aria-label="Open MindVault dashboard">Open Dashboard</button>
 
   <div class="footer-links">
     <a href="#" id="viewStoragePlace">Where is my data stored?</a>

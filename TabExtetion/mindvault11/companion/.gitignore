@@ -1,0 +1,25 @@
+# Go build outputs
+bin/
+*.exe
+*.test
+*.out
+
+# Go module download cache (not committed)
+vendor/
+
+# Test coverage
+coverage.out
+coverage.html
+
+# SQLite database files (runtime data, not source)
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Auth token (contains secret)
+token
+
+# IDE
+.vscode/
+.idea/
+*.swp

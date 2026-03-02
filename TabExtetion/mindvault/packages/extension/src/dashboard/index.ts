@@ -34,6 +34,7 @@ import {
 } from '../db/repositories/downloads';
 import { setSessionKey, clearSessionKey, getSessionKey } from '../services/session-key';
 import { exportMvault, importMvault } from '../services/mvault';
+import { forceAllSync } from '../services/companion-client';
 
 // ---- State -------------------------------------------------
 let currentLibrary: Library | null = null;
@@ -71,6 +72,7 @@ const downloadsTableBody = document.getElementById('downloadsTableBody') as HTML
 const downloadsEmptyEl = document.getElementById('downloadsEmpty') as HTMLDivElement;
 const downloadsCountEl = document.getElementById('downloadsCount') as HTMLDivElement;
 const downloadsSearchEl = document.getElementById('downloadsSearch') as HTMLInputElement;
+const machineSyncBtnEl = document.getElementById('machineSyncBtn') as HTMLButtonElement | null;
 
 // ---- Init --------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
@@ -152,6 +154,9 @@ async function init(): Promise<void> {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') hideSessionContextMenu();
   });
+
+  // Wire Machine Sync button — force-push all IDB sessions to companion SQLite
+  machineSyncBtnEl?.addEventListener('click', () => void handleMachineSync());
 
   // Wire export buttons (All Tabs view)
   document.getElementById('copyAll')?.addEventListener('click', () => {
@@ -259,6 +264,38 @@ function wireTableResize(): void {
       handle.addEventListener('pointerup', onUp);
     });
   });
+}
+
+// ---- Machine Sync -------------------------------------------
+
+/**
+ * handleMachineSync — force-push ALL sessions from every IDB library to
+ * companion SQLite (ignores syncedToCompanion flag; also ensures custom
+ * libraries are created in companion first). Button shows live status.
+ */
+async function handleMachineSync(): Promise<void> {
+  if (!machineSyncBtnEl) return;
+  machineSyncBtnEl.disabled = true;
+  machineSyncBtnEl.textContent = '⏳ Syncing…';
+  machineSyncBtnEl.classList.add('syncing');
+  machineSyncBtnEl.classList.remove('sync-error');
+  try {
+    const pushed = await forceAllSync();
+    machineSyncBtnEl.textContent = `✅ ${pushed} pushed`;
+    machineSyncBtnEl.classList.remove('syncing');
+  } catch {
+    machineSyncBtnEl.textContent = '❌ Offline';
+    machineSyncBtnEl.classList.remove('syncing');
+    machineSyncBtnEl.classList.add('sync-error');
+  } finally {
+    machineSyncBtnEl.disabled = false;
+    setTimeout(() => {
+      if (machineSyncBtnEl) {
+        machineSyncBtnEl.textContent = '☁ Machine Sync';
+        machineSyncBtnEl.classList.remove('syncing', 'sync-error');
+      }
+    }, 3500);
+  }
 }
 
 // ---- Data loading ------------------------------------------

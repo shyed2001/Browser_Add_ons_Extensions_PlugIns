@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "extension-dev-watch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "extension-vitest-ui",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd /d packages\\extension && npx vitest --ui --port 51204"],
+      "port": 51204
+    },
+    {
+      "name": "shared-vitest-ui",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd /d packages\\shared && npx vitest --ui --port 51205"],
+      "port": 51205
+    },
+    {
+      "name": "companion-rest-api",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd /d C:\\Users\\Dell Vostro\\Documents\\TabExtetion\\mindvault\\companion && C:\\Program Files\\Go\\bin\\go.exe run ./cmd/mvaultd"],
+      "port": 47821
+    }
+  ]
+}

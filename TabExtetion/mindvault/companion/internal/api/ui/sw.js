@@ -34,8 +34,9 @@
 // ── Config ────────────────────────────────────────────────────────────────────
 
 /** @const {string} Cache storage key. Bump version to invalidate all cached assets.
- *  v4 — bumped 2026-02-28 to bust stale v1 cache after v4.1/v4.2 UI rewrites. */
-const CACHE_NAME = 'mv-ui-v4';
+ *  v4 — bumped 2026-02-28 to bust stale v1 cache after v4.1/v4.2 UI rewrites.
+ *  v5 — bumped 2026-03-01 to bust v4 cache after column layout CSS fix (v4.4.1). */
+const CACHE_NAME = 'mv-ui-v5';
 
 /**
  * @const {string[]} PRECACHE_URLS

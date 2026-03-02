@@ -3,6 +3,69 @@ _Resolved bugs, build failures, and configuration problems._
 
 ---
 
+## [SOLVED-018] No companion status indicator in popup (ISSUE-003)
+**Date resolved:** 2026-03-02 (v4.6.0)
+**Severity:** Low — users had no way to know if companion was online
+**Fix:** Added green/gray status dot to popup header. `checkCompanionStatus()` pings `/health` with 2s timeout on popup open. Green = online, gray = offline (local-only).
+**Files changed:** `packages/extension/src/popup/popup.html`, `popup.css`, `popup/index.ts`
+
+---
+
+## [SOLVED-017] Companion daemon not auto-started on Windows login (ISSUE-001)
+**Date resolved:** 2026-03-02 (v4.6.0)
+**Severity:** Medium — daemon not running after reboot
+**Fix:** Changed `-AutoStart` parameter default from `$false` to `$true` in `install.ps1`. Also improved health check from single 2s sleep to 5-attempt retry loop.
+**Files changed:** `tools/install-companion/install.ps1`
+
+---
+
+## [SOLVED-013] Custom libraries not syncing to companion (silent 404)
+**Date resolved:** 2026-03-02 (v4.5.0)
+**Severity:** High — sessions saved in custom (non-default) libraries never appeared in companion
+**Symptom:** Machine Sync appeared to complete but custom library sessions were missing from companion All Sessions / All Tabs
+**Root cause:** `syncAllUnpushedSessions()` and `forceAllSync()` posted sessions directly to
+`POST /libraries/{libId}/sessions` — but if that library didn't exist in companion SQLite yet,
+the endpoint returned 404. The error was silently swallowed, so sessions were never pushed.
+**Fix:** Added `libraryExistsInCompanion(libId, token)` check before pushing sessions for each library.
+If the library is missing, `POST /libraries` is called first to create it, then sessions are pushed.
+**Files changed:** `packages/extension/src/services/companion-client.ts`
+
+---
+
+## [SOLVED-012] Vertical character-by-character text in Companion All Tabs title column
+**Date resolved:** 2026-03-02 (v4.4.1)
+**Severity:** Medium — All Tabs table was unreadable; title column showed one character per row
+**Symptom:** The Title column in Companion All Tabs displayed text vertically (one character per line)
+**Root cause:** `COL_DEFAULTS.title = '1fr'` — when CSS `word-break: break-all` was active on the
+column, a `1fr` grid track collapsed to its min-content width ≈ 8px (one character wide).
+JavaScript `style.setProperty('--col-title', '1fr')` overrode any stylesheet minimum, so the
+column had no effective floor.
+**Fix:** Changed `COL_DEFAULTS.title` to `'minmax(160px, 1fr)'` — prevents the column from
+narrowing below 160px regardless of content or word-break setting.
+**Files changed:** `companion/internal/api/ui/app.js`
+
+---
+
+## [SOLVED-011] IndexedDB sessions not auto-syncing to companion SQLite (ISSUE-011)
+**Date resolved:** 2026-03-01 (v4.4.0)
+**Severity:** High — sessions saved in browser extension never appeared in companion All Sessions
+**Symptom:** After saving sessions in the extension, companion showed no data (or stale data).
+Manual "Machine Sync" didn't exist yet; there was no reliable way to push data to companion.
+**Root cause (3 parts):**
+1. `syncAllUnpushedSessions()` was called once at bootstrap but not on reconnect after companion
+   was temporarily offline
+2. Duplicate pushes (retry) failed silently because `INSERT` (not `INSERT OR IGNORE`) rejected
+   already-existing sessions with a unique constraint error
+3. No `syncedToCompanion` flag — no way to know which sessions were already pushed
+**Fix:**
+- Added `syncedToCompanion?: boolean` field to `Session` type
+- `syncAllUnpushedSessions()` filters on `!s.syncedToCompanion` and calls `markSessionSynced()` after success
+- Changed all companion inserts to `INSERT OR IGNORE INTO` — makes pushes idempotent
+- Wired `syncAllUnpushedSessions()` to run on every SW startup (after `bootstrapCompanion`)
+**Files changed:** `packages/shared/src/types/entities.ts` · `packages/extension/src/db/repositories/sessions.ts` · `packages/extension/src/services/companion-client.ts` · `packages/extension/src/background/index.ts` · `companion/internal/db/sqlite.go`
+
+---
+
 ## [SOLVED-001] Extension "Could not load manifest" on Chrome/Edge
 **Date resolved:** 2026-02-24
 **Severity:** Critical — extension could not be loaded at all

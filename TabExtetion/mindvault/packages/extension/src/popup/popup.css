@@ -1,5 +1,8 @@
 /* MindVault Popup — preserves v1.1 visual style */
 
+/* Utility */
+.hidden { display: none !important; }
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   width: 400px;
@@ -14,6 +17,24 @@ body {
   justify-content: space-between;
   margin-bottom: 15px;
 }
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Companion status dot — green=online, gray=offline */
+.companion-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #aaa;
+  display: inline-block;
+  transition: background 0.3s;
+}
+.companion-dot.online  { background: #28a745; }
+.companion-dot.offline { background: #aaa; }
 
 h3 {
   margin: 0;
@@ -249,3 +270,12 @@ a {
 }
 
 a:hover { text-decoration: underline; }
+
+/* Keyboard focus outlines (a11y) */
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-copy:focus-visible,
+.btn-dismiss:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}

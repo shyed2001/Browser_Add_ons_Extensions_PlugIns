@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindVault</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <h3>MindVault</h3>
+    <span class="version">v2</span>
+  </div>
+
+  <!-- Migration banner (shown once after v1→v2 migration) -->
+  <div id="migrationBanner" class="migration-banner" style="display:none;">
+    <span id="migrationMsg"></span>
+    <button id="migrationDismiss" class="btn-dismiss">✕</button>
+  </div>
+
+  <!-- Currently open tabs listing -->
+  <div class="section-label">Currently Open Tabs:</div>
+  <ul id="tabList" class="tab-list"></ul>
+  <textarea id="tabListText" class="tab-textarea" readonly></textarea>
+  <button id="copyButton" class="btn-copy">Copy to Clipboard</button>
+  <div id="copyStatus" class="copy-status">Copied!</div>
+
+  <hr class="divider">
+
+  <!-- Library selector (new in v4.1) -->
+  <div class="library-row">
+    <label for="librarySelect" class="library-label">Save to Library:</label>
+    <select id="librarySelect" class="library-select">
+      <option value="">Loading…</option>
+    </select>
+  </div>
+
+  <!-- Session name input -->
+  <div class="session-row">
+    <input
+      type="text"
+      id="sessionName"
+      class="session-input"
+      placeholder="Session name (optional)"
+      maxlength="80"
+    />
+  </div>
+
+  <!-- Save button -->
+  <button id="saveAllBtn" class="btn-primary">Save Current Tabs</button>
+  <div id="statusMsg" class="status-msg">✅ Saved!</div>
+  <div id="errorMsg" class="error-msg"></div>
+
+  <button id="openDashboard" class="btn-secondary">Open Dashboard</button>
+
+  <div class="footer-links">
+    <a href="#" id="viewStoragePlace">Where is my data stored?</a>
+  </div>
+
+  <script src="index.ts" type="module"></script>
+</body>
+</html>

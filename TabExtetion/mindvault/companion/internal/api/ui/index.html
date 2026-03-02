@@ -93,7 +93,7 @@
         <div class="search-bar">
           <input id="masterTabSearch" type="search" placeholder="Search title, URL, domain, session, library…" />
         </div>
-        <!-- Export toolbar + column visibility toggle -->
+        <!-- Export toolbar + Machine Sync + column visibility toggle -->
         <div id="masterTabsToolbar" class="master-tabs-toolbar">
           <div class="mtb-export-group">
             <button class="btn-mtb" id="mtbCopyJson">📋 Copy All (JSON)</button>
@@ -102,7 +102,15 @@
             <button class="btn-mtb" id="mtbExportHtml">Export HTML</button>
             <button class="btn-mtb" id="mtbExportText">Export Text</button>
           </div>
+          <button class="btn-mtb btn-machine-sync-comp" id="mtbMachineSyncBtn"
+                  title="Request all browser extensions to push their latest sessions here now">
+            ☁ Machine Sync
+          </button>
           <button class="btn-mtb btn-col-toggle" id="mtbColsBtn">⊞ Columns ▾</button>
+        </div>
+        <!-- Machine Sync status notice — shown while waiting for extension SWs to respond -->
+        <div id="machineSyncNotice" class="machine-sync-notice hidden">
+          ⏳ Sync requested — waiting for browser extensions to push their data (up to 30 s)…
         </div>
         <!-- Column visibility dropdown — toggled by Columns button -->
         <div id="colVisMenu" class="col-vis-menu hidden">
@@ -119,7 +127,7 @@
           <label><input type="checkbox" data-col="actions" checked> Actions</label>
         </div>
         <!-- ISSUE-011 (FIXED v4.4.0): offline sessions auto-sync to SQLite on next daemon connect -->
-        <div id="issue011Notice" class="issue-notice" style="display:none">
+        <div id="issue011Notice" class="issue-notice hidden">
           ℹ️ Tabs saved while the companion was offline are automatically synced here when the
           MindVault extension reconnects. If you don't see recent tabs, reload the extension
           (or restart the browser) to trigger a sync.
@@ -134,8 +142,8 @@
           <input id="globalSearch" type="search" placeholder="Search tabs across all libraries…" autofocus />
         </div>
         <div id="searchLibPicker" class="search-lib-picker">
-          <label class="muted" style="font-size:12px">Library:</label>
-          <select id="searchLibSel" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:6px;font-size:13px"></select>
+          <label class="muted search-lib-label">Library:</label>
+          <select id="searchLibSel" class="search-lib-select"></select>
         </div>
         <div id="searchResults" class="tab-list"><div class="empty-msg">Type to search…</div></div>
       </section>
@@ -188,11 +196,14 @@
     <button class="ctx-item" data-action="rename">✏️ Rename</button>
     <div class="ctx-divider"></div>
     <button class="ctx-item ctx-archive-btn"  data-action="archive">🗃️ Archive</button>
-    <button class="ctx-item ctx-restore-btn"  data-action="restore" style="display:none">📤 Restore</button>
+    <button class="ctx-item ctx-restore-btn hidden" data-action="restore">📤 Restore</button>
     <div class="ctx-divider"></div>
     <button class="ctx-item ctx-danger" data-action="delete">🗑️ Remove from history</button>
     <button class="ctx-item ctx-danger" data-action="delete-tabs">💥 Delete session + all tabs</button>
   </div>
+
+  <!-- Toast notification container (positioned fixed via CSS) -->
+  <div id="toastContainer"></div>
 
   <script src="/ui/app.js"></script>
   <script>

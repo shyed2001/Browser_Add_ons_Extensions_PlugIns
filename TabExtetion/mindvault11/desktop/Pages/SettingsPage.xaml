@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MindVault.Desktop.Pages.SettingsPage"
+             Title="Settings">
+
+    <ScrollView Padding="16">
+        <StackLayout Spacing="16">
+
+            <Label Text="Companion Daemon"
+                   FontSize="18" FontAttributes="Bold" />
+
+            <Frame Padding="12" CornerRadius="8" HasShadow="True">
+                <StackLayout Spacing="8">
+                    <Label Text="REST API endpoint" FontAttributes="Bold" />
+                    <Label Text="http://127.0.0.1:47821"
+                           FontFamily="Courier New" TextColor="Gray" />
+                    <Label Text="Token file" FontAttributes="Bold" />
+                    <Label x:Name="TokenPathLabel" TextColor="Gray"
+                           FontFamily="Courier New" />
+                    <Label x:Name="TokenStatusLabel" />
+                </StackLayout>
+            </Frame>
+
+            <Label Text="About"
+                   FontSize="18" FontAttributes="Bold"
+                   Margin="0,8,0,0" />
+
+            <Frame Padding="12" CornerRadius="8" HasShadow="True">
+                <StackLayout Spacing="6">
+                    <Label Text="MindVault Desktop" FontAttributes="Bold" FontSize="16" />
+                    <Label Text="Version 3.0.0" TextColor="Gray" />
+                    <Label Text="Phase 3 — Desktop App + Import Platform" TextColor="Gray" />
+                    <Label Text="Companion REST API: v0.1.0" TextColor="Gray" />
+                    <Label Text="Personal knowledge vault — CRM for your own attention"
+                           TextColor="Gray" FontAttributes="Italic" />
+                </StackLayout>
+            </Frame>
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

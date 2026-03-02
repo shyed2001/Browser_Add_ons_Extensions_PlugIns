@@ -8,8 +8,7 @@
     "storage",
     "downloads",
     "history",
-    "bookmarks",
-    "nativeMessaging"
+    "bookmarks"
   ],
   "action": {
     "default_popup": "src/popup/popup.html",

@@ -5,10 +5,23 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"log"
 	"net/http"
+	"strconv"
+	"sync"
 	"time"
 
 	"github.com/mindvault/companion/internal/db"
+)
+
+// ── Machine Sync — in-memory state (no DB migration required) ─────────────────
+// syncMu guards all fields below. syncPending is set by POST /sync and cleared
+// by POST /sync/done (called by extension SW after it finishes forceAllSync).
+var (
+	syncMu      sync.Mutex
+	syncPending bool
+	requestedAt time.Time
+	syncDoneAt  time.Time
 )
 
 // generateID returns a 16-byte (32 hex char) random ID string.
@@ -39,18 +52,22 @@ func (h *Handler) GetToken(w http.ResponseWriter, r *http.Request) {
 	jsonOK(w, map[string]string{"token": h.token})
 }
 
-// jsonOK writes a JSON 200 response.
+// jsonOK writes a JSON 200 response. Logs encoding errors (client may have disconnected).
 func jsonOK(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(v)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		log.Printf("[warn] jsonOK encode: %v", err)
+	}
 }
 
-// jsonErr writes a JSON error response.
+// jsonErr writes a JSON error response. Logs encoding errors.
 func jsonErr(w http.ResponseWriter, msg string, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	if err := json.NewEncoder(w).Encode(map[string]string{"error": msg}); err != nil {
+		log.Printf("[warn] jsonErr encode: %v", err)
+	}
 }
 
 // Health godoc — GET /health (no auth)
@@ -248,10 +265,17 @@ func (h *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// Auto-rename "Default Library" → "Default (Chrome — DellVostro)" on push from known browser.
-	// Includes OS username so users with multiple machines can distinguish their libraries.
-	if req.SourceBrowser != "" && lib.Name == "Default Library" {
-		_ = h.db.RenameLibrary(libID, "Default ("+req.SourceBrowser+" \u2014 "+db.OsUsername()+")")
+	// Auto-rename on push from a known browser.
+	// Fires for two cases:
+	//   (a) lib still named "Default Library" (fresh bootstrap, no migration yet)
+	//   (b) lib named "Default (username)" — startup migration ran but no sessions with
+	//       source_browser existed yet; now we have one, so upgrade to include browser.
+	if req.SourceBrowser != "" {
+		username := db.OsUsername()
+		defaultNoBS := "Default (" + username + ")" // e.g. "Default (Dell Vostro)"
+		if lib.Name == "Default Library" || lib.Name == defaultNoBS {
+			_ = h.db.RenameLibrary(libID, "Default ("+req.SourceBrowser+" \u2014 "+username+")")
+		}
 	}
 	jsonOK(w, session)
 }
@@ -422,8 +446,97 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 }
 
 // Sync godoc — POST /sync
+// Sets syncPending=true in memory. The extension SW polls GET /sync/pending
+// every 30 s; on true it calls forceAllSync() then POST /sync/done.
+// No DB write — state is ephemeral (resets on daemon restart).
 func (h *Handler) Sync(w http.ResponseWriter, r *http.Request) {
-	jsonErr(w, "not yet implemented", http.StatusNotImplemented)
+	syncMu.Lock()
+	syncPending = true
+	requestedAt = time.Now()
+	syncMu.Unlock()
+	jsonOK(w, map[string]any{
+		"ok":          true,
+		"requestedAt": requestedAt.UTC().Format(time.RFC3339),
+	})
+}
+
+// GetSyncPending godoc — GET /sync/pending
+// Extension SWs poll this every 30 s to detect pending Machine Sync requests.
+func (h *Handler) GetSyncPending(w http.ResponseWriter, r *http.Request) {
+	syncMu.Lock()
+	p, ra := syncPending, requestedAt
+	syncMu.Unlock()
+	raStr := ""
+	if !ra.IsZero() {
+		raStr = ra.UTC().Format(time.RFC3339)
+	}
+	jsonOK(w, map[string]any{"pending": p, "requestedAt": raStr})
+}
+
+// SyncDone godoc — POST /sync/done
+// Called by extension SW after forceAllSync() completes. Clears pending flag
+// so the companion UI polling loop can stop and refresh All Tabs.
+func (h *Handler) SyncDone(w http.ResponseWriter, r *http.Request) {
+	syncMu.Lock()
+	syncPending = false
+	syncDoneAt = time.Now()
+	syncMu.Unlock()
+	jsonOK(w, map[string]any{
+		"ok":    true,
+		"doneAt": syncDoneAt.UTC().Format(time.RFC3339),
+	})
+}
+
+// ── Database Backup & Restore ─────────────────────────────────────────────────
+
+// CreateBackup godoc — POST /backup?retain=30
+// Creates a timestamped backup of the SQLite database in the backups directory.
+// The optional `retain` query param (days, default 30) triggers cleanup of older backups.
+func (h *Handler) CreateBackup(w http.ResponseWriter, r *http.Request) {
+	retain, _ := strconv.Atoi(r.URL.Query().Get("retain"))
+	if retain <= 0 {
+		retain = 30
+	}
+	info, err := h.db.Backup(retain)
+	if err != nil {
+		jsonErr(w, "backup failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	jsonOK(w, info)
+}
+
+// ListBackups godoc — GET /backups
+// Returns all backup files sorted newest-first.
+func (h *Handler) ListBackups(w http.ResponseWriter, r *http.Request) {
+	list, err := h.db.ListBackups()
+	if err != nil {
+		jsonErr(w, "list backups failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	jsonOK(w, list)
+}
+
+// RestoreBackup godoc — POST /restore/{filename}
+// Replaces the live database with the named backup file and reopens the connection.
+// The HTTP server keeps running; callers should reload the UI after restore.
+func (h *Handler) RestoreBackup(w http.ResponseWriter, r *http.Request) {
+	filename := r.PathValue("filename")
+	if err := h.db.Restore(filename); err != nil {
+		jsonErr(w, "restore failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	jsonOK(w, map[string]any{"ok": true, "message": "Restore complete — refresh the page."})
+}
+
+// DeleteBackup godoc — DELETE /backups/{filename}
+// Permanently removes a backup file.
+func (h *Handler) DeleteBackup(w http.ResponseWriter, r *http.Request) {
+	filename := r.PathValue("filename")
+	if err := h.db.DeleteBackup(filename); err != nil {
+		jsonErr(w, "delete backup failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	jsonOK(w, map[string]any{"ok": true})
 }
 
 // ─── Bookmarks ────────────────────────────────────────────────────────────────

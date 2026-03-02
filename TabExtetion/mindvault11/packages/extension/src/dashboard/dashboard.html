@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindVault Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <div class="page-header">
+      <h1>MindVault <span class="page-subtitle">Dashboard</span></h1>
+      <div class="library-switcher">
+        <select id="librarySelect" class="library-select" aria-label="Active library"></select>
+        <button id="newLibraryBtn" class="btn-new-library" title="Create new library">+ Library</button>
+      </div>
+    </div>
+
+    <!-- Navigation tabs -->
+    <nav class="nav-tabs" role="tablist">
+      <button class="nav-tab active" data-view="sessions" role="tab" aria-selected="true">
+        Sessions
+      </button>
+      <button class="nav-tab" data-view="tabs" role="tab" aria-selected="false">
+        All Tabs
+      </button>
+      <button class="nav-tab" data-view="bookmarks" role="tab" aria-selected="false">
+        Bookmarks
+      </button>
+      <button class="nav-tab" data-view="history" role="tab" aria-selected="false">
+        History
+      </button>
+      <button class="nav-tab" data-view="downloads" role="tab" aria-selected="false">
+        Downloads
+      </button>
+      <button class="nav-tab" data-view="settings" role="tab" aria-selected="false">
+        Settings
+      </button>
+    </nav>
+
+    <!-- ======== VIEW: SESSIONS ======== -->
+    <div id="view-sessions" class="view active">
+      <div class="controls">
+        <input type="text" id="sessionSearch" class="search-input" placeholder="Search sessions…">
+        <div class="btn-group">
+          <button id="exportSessionsJson" class="btn-export">Export JSON</button>
+          <button id="exportSessionsCsv" class="btn-export">Export CSV</button>
+          <button id="exportSessionsHtml" class="btn-export">Export HTML</button>
+        </div>
+      </div>
+
+      <div id="sessionsToolbar" class="sessions-toolbar">
+        <button id="showArchivedBtn" class="toggle-archived" title="Toggle archived sessions">☐ Archived</button>
+      </div>
+      <div id="sessionsContainer" class="sessions-table-wrap">
+        <div class="empty-state">No sessions yet. Save some tabs from the popup!</div>
+      </div>
+    </div>
+
+    <!-- ======== VIEW: ALL TABS ======== -->
+    <div id="view-tabs" class="view">
+      <div class="controls">
+        <input type="text" id="tabSearch" class="search-input" placeholder="Search by title, URL or notes…">
+        <div class="btn-group">
+          <button id="copyAll" class="btn-export">Copy All (JSON)</button>
+          <button id="exportCsv" class="btn-export">Export CSV</button>
+          <button id="exportJson" class="btn-export">Export JSON</button>
+          <button id="exportHtml" class="btn-export">Export HTML</button>
+          <button id="exportText" class="btn-export">Export Text</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="dbTable">
+          <thead>
+            <tr>
+              <th class="col-num">#<span class="th-resize-handle" data-col="col-num"></span></th>
+              <th class="col-title">Tab Name<span class="th-resize-handle" data-col="col-title"></span></th>
+              <th class="col-url">Link Address<span class="th-resize-handle" data-col="col-url"></span></th>
+              <th class="col-date">Last Saved<span class="th-resize-handle" data-col="col-date"></span></th>
+              <th class="col-repeat">Repeats<span class="th-resize-handle" data-col="col-repeat"></span></th>
+              <th class="col-notes">Notes<span class="th-resize-handle" data-col="col-notes"></span></th>
+              <th class="col-actions">Actions<span class="th-resize-handle" data-col="col-actions"></span></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div id="tabsEmpty" class="empty-state" style="display:none;">
+          No tabs saved yet.
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== VIEW: BOOKMARKS ======== -->
+    <div id="view-bookmarks" class="view">
+      <div class="controls">
+        <input type="text" id="bookmarkSearch" class="search-input" placeholder="Search bookmarks…">
+        <button id="addBookmark" class="btn-primary-sm">+ Add Bookmark</button>
+      </div>
+      <div id="bookmarksContainer">
+        <div class="empty-state">No bookmarks yet. Add one above!</div>
+      </div>
+    </div>
+
+    <!-- ======== VIEW: HISTORY ======== -->
+    <div id="view-history" class="view">
+      <div class="controls">
+        <input type="text" id="historySearch" class="search-input" placeholder="Search history by title or URL…">
+        <div class="btn-group">
+          <button class="btn-filter active" data-history-filter="all">All</button>
+          <button class="btn-filter" data-history-filter="today">Today</button>
+          <button class="btn-filter" data-history-filter="week">This Week</button>
+          <button class="btn-filter" data-history-filter="starred">★ Starred</button>
+          <button class="btn-filter" data-history-filter="important">! Important</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="historyTable">
+          <thead>
+            <tr>
+              <th class="col-flag">Flags</th>
+              <th class="col-title">Title</th>
+              <th class="col-url">URL</th>
+              <th class="col-count">Visits</th>
+              <th class="col-date">Last Visit</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody"></tbody>
+        </table>
+        <div id="historyEmpty" class="empty-state" style="display:none;">
+          No history entries yet. Browse some pages to capture history!
+        </div>
+      </div>
+      <div id="historyCount" class="item-count"></div>
+    </div>
+
+    <!-- ======== VIEW: DOWNLOADS ======== -->
+    <div id="view-downloads" class="view">
+      <div class="controls">
+        <input type="text" id="downloadsSearch" class="search-input" placeholder="Search downloads by filename or URL…">
+        <div class="btn-group">
+          <button class="btn-filter active" data-dl-filter="all">All</button>
+          <button class="btn-filter" data-dl-filter="complete">Complete</button>
+          <button class="btn-filter" data-dl-filter="interrupted">Interrupted</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="downloadsTable">
+          <thead>
+            <tr>
+              <th class="col-title">Filename</th>
+              <th class="col-url">Source URL</th>
+              <th class="col-size">Size</th>
+              <th class="col-mime">Type</th>
+              <th class="col-date">Downloaded</th>
+              <th class="col-state">State</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="downloadsTableBody"></tbody>
+        </table>
+        <div id="downloadsEmpty" class="empty-state" style="display:none;">
+          No downloads recorded yet.
+        </div>
+      </div>
+      <div id="downloadsCount" class="item-count"></div>
+    </div>
+
+    <!-- ======== VIEW: SETTINGS ======== -->
+    <div id="view-settings" class="view">
+      <h2>Settings</h2>
+
+      <!-- Encryption section — dynamically populated based on current library -->
+      <section class="settings-section" id="encryptionSection">
+        <h3>Library Encryption</h3>
+        <div id="encryptionStatus" class="settings-row">
+          <!-- Rendered by JS: enable / lock / unlock controls -->
+          <div class="settings-desc">Loading…</div>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h3>Data Management</h3>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Legacy Data (v1.1)</div>
+            <div class="settings-desc" id="legacyDataStatus">Checking…</div>
+          </div>
+          <button id="clearLegacyData" class="btn-danger-sm">Clear Legacy Data</button>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Export Full Backup</div>
+            <div class="settings-desc">Download all data as JSON</div>
+          </div>
+          <button id="exportFullBackup" class="btn-secondary-sm">Export Backup</button>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Import Data</div>
+            <div class="settings-desc">Import from JSON backup</div>
+          </div>
+          <label class="btn-secondary-sm" style="cursor:pointer;">
+            Import
+            <input type="file" id="importFile" accept=".json" style="display:none;">
+          </label>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Export Encrypted Backup</div>
+            <div class="settings-desc">Download password-protected .mvault file</div>
+          </div>
+          <button id="exportMvaultBtn" class="btn-secondary-sm">Export .mvault</button>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Import Encrypted Backup</div>
+            <div class="settings-desc">Restore from a .mvault file</div>
+          </div>
+          <label class="btn-secondary-sm" style="cursor:pointer;">
+            Import .mvault
+            <input type="file" id="importMvaultFile" accept=".mvault" style="display:none;">
+          </label>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h3>About</h3>
+        <div class="settings-desc">
+          MindVault v2.0.0 — Personal Knowledge Vault<br>
+          <a href="https://github.com/yourusername/mindvault" target="_blank" rel="noopener">
+            GitHub
+          </a>
+        </div>
+      </section>
+    </div>
+
+  </div>
+
+  <!-- Session context menu -->
+  <div id="sCtxMenu" class="s-ctx-menu hidden">
+    <button class="s-ctx-item" data-action="open">📂 Open Tabs</button>
+    <button class="s-ctx-item" data-action="rename">✏️ Rename</button>
+    <div class="s-ctx-divider"></div>
+    <button class="s-ctx-item s-ctx-archive-btn" data-action="archive">🗃️ Archive</button>
+    <button class="s-ctx-item s-ctx-restore-btn" data-action="restore" style="display:none">📤 Restore</button>
+    <div class="s-ctx-divider"></div>
+    <button class="s-ctx-item s-ctx-danger" data-action="delete">🗑️ Remove session (keep tabs)</button>
+    <button class="s-ctx-item s-ctx-danger" data-action="delete-tabs">💥 Delete session + all tabs</button>
+  </div>
+
+  <script src="index.ts" type="module"></script>
+</body>
+</html>

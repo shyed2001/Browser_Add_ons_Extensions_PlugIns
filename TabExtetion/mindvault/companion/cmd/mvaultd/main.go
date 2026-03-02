@@ -64,6 +64,12 @@ func main() {
 		log.Printf("default-library rename migration warning: %v", err)
 	}
 
+	// Daily auto-backup — one snapshot per calendar day, 30-day default retention.
+	// Non-fatal: a backup failure never prevents the daemon from starting.
+	if err := database.AutoBackup(30); err != nil {
+		log.Printf("auto-backup warning (non-fatal): %v", err)
+	}
+
 	// Load or generate auth token
 	token, err := auth.LoadOrCreateToken()
 	if err != nil {
